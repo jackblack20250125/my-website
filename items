@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>路竹高中資訊物品管理</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* CSS 維持原樣，無須更動，直接複製即可 */
+    :root {
+      --primary-red: #D32F2F; --primary-blue: #1565C0; --primary-green: #2E7D32;
+      --primary-color: var(--primary-blue);
+      --bg-gray: #f8f9fa;
+    }
+    body { font-family: -apple-system, "Noto Sans TC", sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
+    .container { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 10px solid var(--primary-color); box-sizing: border-box; }
+    h1 { text-align: center; color: #2C3E50; font-size: 1.4rem; margin: 0 0 15px 0; }
+    .mode-info { text-align: center; font-size: 0.9rem; margin-bottom: 20px; color: #666; }
+    #modeDisplay { color: var(--primary-color); font-weight: bold; font-size: 1.1rem; }
+    .mode-group { display: flex; gap: 8px; margin-bottom: 20px; background: #e9ecef; padding: 4px; border-radius: 10px; }
+    .mode-btn { flex: 1; padding: 12px 5px; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: #495057; font-size: 0.9rem; transition: 0.2s; border: none; background: transparent; }
+    .mode-btn.active { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .mode-btn[data-mode="consume"].active { color: var(--primary-red); }
+    .mode-btn[data-mode="borrow"].active { color: var(--primary-blue); }
+    .mode-btn[data-mode="return"].active { color: var(--primary-green); }
+    .identity-toggle { display: flex; background: #e9ecef; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+    .toggle-item { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: bold; color: #6c757d; }
+    .toggle-item.active { background: white; color: var(--primary-color); }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; color: #34495E; font-size: 0.95rem; }
+    input, select { width: 100%; padding: 14px; border: 1.5px solid #dee2e6; border-radius: 8px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
+    .search-box { display: flex; gap: 8px; }
+    .btn-search { width: 80px; background: #5D6D7E; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    #itemCard { margin-top: 20px; padding: 15px; border-radius: 10px; background: var(--bg-gray); border: 1px solid #dee2e6; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; background: #ced4da; }
+    #submitBtn { width: 100%; padding: 18px; border: none; border-radius: 10px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; background-color: var(--primary-color); margin-top: 25px; transition: 0.2s; }
+    #submitBtn:disabled { background-color: #adb5bd; cursor: not-allowed; }
+    .hidden { display: none; }
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; background: #000; }
+    #signature-pad { width: 100%; height: 200px; border: 1px solid #ccc; background: #fff; touch-action: none; border-radius: 8px; cursor: crosshair; }
+    .sig-tools { display: flex; justify-content: space-between; padding: 5px; background: #f8f9fa; }
+    #scanStatus { text-align: center; font-size: 0.8rem; color: #e67e22; margin-top: 5px; font-weight: bold; }
+    
+    .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .full { grid-column: span 2; }
+    .add-section { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #ced4da; margin-top: 10px; }
+    .btn-save { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>路竹高中資訊物品管理</h1>
+  <div class="mode-info">目前模式：<span id="modeDisplay">借用</span></div>
+
+  <div class="mode-group">
+    <button class="mode-btn" data-mode="consume" onclick="changeMode('consume', 'var(--primary-red)', '領用(消耗品)')">領用</button>
+    <button class="mode-btn active" data-mode="borrow" onclick="changeMode('borrow', 'var(--primary-blue)', '借用')">借用</button>
+    <button class="mode-btn" data-mode="return" onclick="changeMode('return', 'var(--primary-green)', '歸還')">歸還</button>
+  </div>
+
+  <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
+
+  <div class="form-group">
+    <label>物品資訊來源</label>
+    <div class="mode-group" style="background: #f1f3f5;">
+      <button class="mode-btn active" id="btn-camera" onclick="toggleSearchMethod('camera')">相機掃描</button>
+      <button class="mode-btn" id="btn-manual" onclick="toggleSearchMethod('manual')">手動輸入</button>
+      <button class="mode-btn" id="btn-add" onclick="toggleSearchMethod('add')">新增物品</button>
+    </div>
+  </div>
+
+  <div id="method-camera" class="search-method">
+    <div id="reader"></div>
+    <div id="scanStatus">等待掃描中...</div>
+  </div>
+
+  <div id="method-manual" class="search-method hidden">
+    <div class="search-box">
+      <input type="text" id="barcode" placeholder="請掃描或輸入" onkeypress="if(event.keyCode==13) doSearch(this.value)">
+      <button class="btn-search" onclick="doSearch(document.getElementById('barcode').value)">搜尋</button>
+    </div>
+  </div>
+
+  <div id="method-add" class="search-method hidden">
+    <div class="add-section">
+      <div class="add-grid">
+        <div class="form-group"><label>條碼編號</label><input type="text" id="a_bc" placeholder="必填"></div>
+        <div class="form-group"><label>財產編號</label><input type="text" id="a_pid"></div>
+        <div class="form-group full"><label>物品名稱</label><input type="text" id="a_name" placeholder="必填"></div>
+        <div class="form-group"><label>廠牌</label><input type="text" id="a_brand"></div>
+        <div class="form-group"><label>型號</label><input type="text" id="a_model"></div>
+        <div class="form-group full"><label>配件內容</label><input type="text" id="a_acc" placeholder="如：電源線、滑鼠..."></div>
+        <div class="form-group">
+          <label>借領模式</label>
+          <select id="a_usage"><option value="領用">可領</option><option value="借用">可借</option></select>
+        </div>
+        <div class="form-group">
+          <label>類別</label>
+          <select id="a_cat"><option value="耗材">耗材</option><option value="資產">資產</option></select>
+        </div>
+        <div class="form-group"><label>總數量</label><input type="number" id="a_tqty" value="1"></div>
+        <div class="form-group"><label>剩餘數量</label><input type="number" id="a_rqty" value="1"></div>
+        <div class="form-group full"><label>存放位置</label><input type="text" id="a_loc"></div>
+        <div class="form-group full">
+          <label>完好狀態</label>
+          <select id="a_stat"><option value="正常">正常</option><option value="完好">完好</option><option value="損壞">損壞</option></select>
+        </div>
+        <div class="form-group full"><label>備註</label><input type="text" id="a_note"></div>
+      </div>
+      <button class="btn-save" onclick="doAddNewItem()">確認新增至資料庫</button>
+    </div>
+  </div>
+
+  <div id="itemCard" class="hidden">
+    <div id="cardContent">
+      <div class="card-header"><h4 id="resName" style="margin:0">物品名稱</h4><span class="badge" id="resCat">類別</span></div>
+      <div id="resAction" style="padding-top:10px; border-top:1px dashed #ced4da; margin-top:10px;"></div>
+    </div>
+  </div>
+  <div class="form-group">
+      <label>使用身分</label>
+      <div class="identity-toggle">
+        <div class="toggle-item active" data-id="faculty" onclick="changeId('faculty')">教職員</div>
+        <div class="toggle-item" data-id="student" onclick="changeId('student')">學生</div>
+      </div>
+      <input type="hidden" id="identityValue" value="faculty">
+    </div>
+
+    <div id="facultyInput">
+      <div class="form-group"><label>姓名</label><input type="text" id="facultyName" placeholder="請輸入姓名"></div>
+    </div>
+
+    <div id="studentInput" class="hidden">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <div class="form-group"><label>學制</label><select id="sys" onchange="updateCls()"><option value="">選擇</option><option value="senior">高中</option><option value="junior">國中</option></select></div>
+        <div class="form-group"><label>班級</label><select id="cls"><option value="">請選學制</option></select></div>
+        <div class="form-group"><label>座號</label><select id="seat"></select></div>
+      </div>
+    </div>
+
+
+  <div id="signatureArea" class="hidden" style="margin-top:20px;">
+    <label>簽名 (請用滑鼠或手指簽署)</label>
+    <canvas id="signature-pad"></canvas>
+    <div class="sig-tools">
+      <small style="color:#888">請在上方處簽名</small>
+      <button type="button" onclick="clearSignature()">清除</button>
+    </div>
+  </div>
+
+  <button id="submitBtn" onclick="doSubmit()" disabled>請先搜尋物品</button>
+</div>
+
+<script>
+  // ==========================================
+  // ★★★ 請在此填入您的 GAS Web App 網址 ★★★
+  // ==========================================
+  const API_URL = "https://script.google.com/macros/s/您的ID/exec"; 
+  // ==========================================
+
+  let curMode = 'borrow';
+  let curItem = null;
+  let html5QrCode = null;
+  let canvas, ctx, drawing = false;
+  let lastScan = "", scanMatchCount = 0;
+  const NEED_MATCH = 3; 
+
+  window.onload = () => { initSeats(); startScanner(); };
+
+  // 通用 API 呼叫函式
+  async function callApi(action, data = {}) {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: action, ...data })
+      });
+      return await response.json();
+    } catch (e) {
+      console.error("API Call Error", e);
+      throw e;
+    }
+  }
+
+  function resetUI() {
+    document.getElementById('facultyName').value = "";
+    document.getElementById('barcode').value = "";
+    document.getElementById('itemCard').classList.add('hidden');
+    document.getElementById('signatureArea').classList.add('hidden');
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerText = '請先搜尋物品';
+    if (ctx) clearSignature();
+    lastScan = ""; scanMatchCount = 0;
+    document.getElementById('scanStatus').innerText = "等待掃描中...";
+    // 如果目前是相機模式，重新啟動
+    if (!document.getElementById('method-camera').classList.contains('hidden')) {
+        startScanner();
+    }
+  }
+
+  function changeMode(m, color, txt) {
+    curMode = m;
+    document.documentElement.style.setProperty('--primary-color', color);
+    document.getElementById('modeDisplay').innerText = txt;
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-mode="${m}"]`).classList.add('active');
+  }
+
+  function changeId(id) {
+    document.getElementById('identityValue').value = id;
+    document.querySelectorAll('.toggle-item').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-id="${id}"]`).classList.add('active');
+    document.getElementById('facultyInput').classList.toggle('hidden', id !== 'faculty');
+    document.getElementById('studentInput').classList.toggle('hidden', id !== 'student');
+  }
+
+  function toggleSearchMethod(method) {
+    document.querySelectorAll('.search-method').forEach(el => el.classList.add('hidden'));
+    document.getElementById(`method-${method}`).classList.remove('hidden');
+    document.getElementById('btn-camera').classList.toggle('active', method === 'camera');
+    document.getElementById('btn-manual').classList.toggle('active', method === 'manual');
+    document.getElementById('btn-add').classList.toggle('active', method === 'add');
+    
+    if (method === 'camera') startScanner(); else stopScanner();
+    
+    const isAdd = (method === 'add');
+    document.getElementById('itemCard').classList.add('hidden');
+    document.getElementById('signatureArea').classList.add('hidden');
+    document.getElementById('submitBtn').classList.toggle('hidden', isAdd);
+  }
+
+  function startScanner() {
+    if (html5QrCode && html5QrCode.isScanning) return;
+    
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode("reader");
+    }
+    
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 250, height: 150 },
+      aspectRatio: 1.0 
+    };
+
+    html5QrCode.start(
+      { facingMode: "environment" }, 
+      config,
+      (text) => {
+        if (text === lastScan) scanMatchCount++; 
+        else { lastScan = text; scanMatchCount = 1; }
+        
+        document.getElementById('scanStatus').innerText = `核對中: ${scanMatchCount}/${NEED_MATCH}`;
+        
+        if (scanMatchCount >= NEED_MATCH) {
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+          stopScanner();
+          document.getElementById('scanStatus').innerText = "驗證成功！";
+          document.getElementById('barcode').value = text;
+          doSearch(text);
+        }
+      }
+    ).catch(err => {
+      console.error("相機啟動失敗: ", err);
+      // 如果不是因為切換頁面導致的停止，才顯示錯誤
+      if(document.getElementById('method-camera') && !document.getElementById('method-camera').classList.contains('hidden')){
+          Swal.fire({
+            icon: 'error',
+            title: '無法開啟相機',
+            text: '請確認是否已允許瀏覽器存取相機，或嘗試使用 Chrome/Safari 瀏覽器開啟。'
+          });
+      }
+    });
+  }
+
+  function stopScanner() {
+    if (html5QrCode && html5QrCode.isScanning) {
+      html5QrCode.stop().then(() => { html5QrCode = null; }).catch(err=>{});
+    }
+  }
+
+  function doSearch(val) {
+    if (!val) return;
+    Swal.fire({ title: '查詢中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
+    // 改用 fetch 呼叫 API
+    callApi('search', { barcode: val }).then(item => {
+      Swal.close();
+      if (item && item.found) {
+        // 1. 找到物品
+        curItem = item;
+        document.getElementById('itemCard').classList.remove('hidden');
+        document.getElementById('resName').innerText = item.name;
+        document.getElementById('resCat').innerText = item.category;
+        
+        let accText = item.accessories ? `<div style="color:#e67e22; font-size:0.9rem;">配件：${item.accessories}</div>` : "";
+        let html = accText + (item.category === "耗材" ? 
+          `庫存: <b>${item.stock}</b><br><label style="margin-top:10px">數量</label><input type="number" id="qty" value="1" min="1">` :
+          `目前狀態: <b>${item.status}</b><br><label style="margin-top:10px">變更為</label><select id="status"><option value="正常">正常</option><option value="完好">完好</option><option value="損壞">損壞</option></select>`);
+        
+        document.getElementById('resAction').innerHTML = html;
+        document.getElementById('signatureArea').classList.remove('hidden');
+        setTimeout(initSignaturePad, 100); 
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').innerText = '確認送出交易';
+        
+      } else {
+        // 2. 找不到物品
+        stopScanner();
+        Swal.fire({
+          icon: 'question',
+          title: '找不到資料',
+          text: `條碼「${val}」不存在。是否要新增此物品？`,
+          showCancelButton: true,
+          confirmButtonText: '前往新增',
+          cancelButtonText: '重新掃描'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            toggleSearchMethod('add');
+            document.getElementById('a_bc').value = val;
+            document.getElementById('a_name').focus();
+          } else {
+            lastScan = ""; scanMatchCount = 0;
+            startScanner();
+          }
+        });
+      }
+    }).catch(err => {
+      Swal.fire('錯誤', '連線失敗: ' + err, 'error');
+    });
+  }
+
+  function initSignaturePad() {
+    canvas = document.getElementById('signature-pad');
+    ctx = canvas.getContext('2d');
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    ctx.scale(ratio, ratio);
+    
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const start = (e) => {
+      drawing = true;
+      const p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      if (e.touches) e.preventDefault();
+    };
+
+    const move = (e) => {
+      if (!drawing) return;
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      if (e.touches) e.preventDefault();
+    };
+
+    const stop = () => { drawing = false; };
+
+    canvas.addEventListener('touchstart', start, {passive: false});
+    canvas.addEventListener('touchmove', move, {passive: false});
+    canvas.addEventListener('touchend', stop);
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', stop);
+  }
+
+  function clearSignature() {
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function doSubmit() {
+    const idMode = document.getElementById('identityValue').value;
+    let user = (idMode === 'faculty') ? document.getElementById('facultyName').value.trim() : `${document.getElementById('cls').value}-${document.getElementById('seat').value}`;
+    if (!user || user.includes('undefined') || user === "-") return Swal.fire('填寫不完整', '請輸入姓名或選擇班級座號', 'warning');
+    
+    const sigData = canvas.toDataURL("image/png");
+    // 簡單判斷 Base64 長度，全白通常很短
+    if (sigData.length < 2000) return Swal.fire('缺少簽名', '請先簽名再送出', 'warning');
+
+    Swal.fire({ title: '處理中...', text: '正在儲存資料', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+    const p = {
+      mode: document.getElementById('modeDisplay').innerText,
+      barcode: curItem.barcode, propId: curItem.propId, category: curItem.category, itemRow: curItem.row,
+      identity: idMode === 'faculty' ? '教職員' : '學生', userName: user, signatureData: sigData,
+      qty: document.getElementById('qty') ? parseInt(document.getElementById('qty').value) : 1,
+      itemStatus: document.getElementById('status') ? document.getElementById('status').value : '正常'
+    };
+
+    callApi('submit', p).then(r => {
+      if (r.success) Swal.fire({ icon: 'success', title: '送出成功', timer: 1000, showConfirmButton: false }).then(() => resetUI());
+      else Swal.fire('失敗', r.error, 'error');
+    }).catch(err => Swal.fire('錯誤', '連線失敗', 'error'));
+  }
+
+  function doAddNewItem() {
+    const p = {
+      barcode: document.getElementById('a_bc').value.trim(),
+      propId: document.getElementById('a_pid').value.trim(),
+      name: document.getElementById('a_name').value.trim(),
+      brand: document.getElementById('a_brand').value.trim(),
+      model: document.getElementById('a_model').value.trim(),
+      accessories: document.getElementById('a_acc').value.trim(),
+      usageType: document.getElementById('a_usage').value,
+      category: document.getElementById('a_cat').value,
+      totalQty: document.getElementById('a_tqty').value,
+      remainQty: document.getElementById('a_rqty').value,
+      location: document.getElementById('a_loc').value,
+      status: document.getElementById('a_stat').value,
+      notes: document.getElementById('a_note').value
+    };
+    if (!p.barcode || !p.name) return Swal.fire('缺少資料', '條碼與名稱為必填項目', 'warning');
+    
+    Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
+    callApi('add', p).then(r => {
+      if (r.success) {
+        Swal.fire({ icon: 'success', title: '新增成功', timer: 1500 });
+        document.querySelectorAll('#method-add input').forEach(i => i.value = "");
+        document.getElementById('a_tqty').value = "1"; document.getElementById('a_rqty').value = "1";
+      } else Swal.fire('失敗', r.error, 'error');
+    }).catch(err => Swal.fire('錯誤', '連線失敗', 'error'));
+  }
+
+  function updateCls() {
+    const s = document.getElementById('sys').value, c = document.getElementById('cls');
+    c.innerHTML = '<option value="">請選擇</option>';
+    if (s === 'senior') { for(let g=4; g<=6; g++) for(let i=1; i<=7; i++) { let v=`${g}${i<10?'0'+i:i}`; c.add(new Option(v, v)); } }
+    else if (s === 'junior') { const cnt=[11,12,11]; for(let g=1; g<=3; g++) for(let i=1; i<=cnt[g-1]; i++) { let v=`${g}${i<10?'0'+i:i}`; c.add(new Option(v, v)); } }
+  }
+
+  function initSeats() {
+    const s = document.getElementById('seat'); s.innerHTML = '<option value="">座號</option>';
+    for(let i=1; i<=45; i++) { let v=i<10?'0'+i:i; s.add(new Option(v, v)); }
+  }
+</script>
+</body>
+</html>
