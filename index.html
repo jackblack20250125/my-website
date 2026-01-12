@@ -10,9 +10,8 @@
             /* 定義顏色變數 */
             --primary-blue: #4facfe;
             --secondary-blue: #00f2fe;
-            --bg-gray: #f0f2f5; /* 稍微加深背景色，讓白卡片更突出 */
+            --bg-gray: #f0f2f5;
             --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            /* 更強烈的懸浮陰影 */
             --hover-shadow: 0 25px 50px rgba(0,0,0,0.15);
             
             /* 系統代表色 */
@@ -36,12 +35,12 @@
             background: linear-gradient(135deg, var(--secondary-blue), var(--primary-blue));
             color: white;
             text-align: center;
-            padding: 80px 20px 100px; /* 增加下方 padding 給弧形 */
+            padding: 80px 20px 120px; /* 增加下方 padding 給卡片上浮空間 */
             position: relative;
             overflow: hidden;
+            margin-bottom: 0; /* 清除邊距 */
         }
 
-        /* 增加一個裝飾性的底部弧線 */
         .header::after {
             content: '';
             position: absolute;
@@ -51,7 +50,7 @@
             height: 100px;
             background-color: var(--bg-gray);
             border-radius: 50% 50% 0 0;
-            transform: scaleX(1.2); /* 拉寬弧線 */
+            transform: scaleX(1.2);
         }
 
         .header h1 {
@@ -60,6 +59,8 @@
             font-weight: 700;
             letter-spacing: 3px;
             text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
         }
 
         .header p {
@@ -67,66 +68,65 @@
             font-size: 1.2em;
             opacity: 0.95;
             font-weight: 400;
+            position: relative;
+            z-index: 2;
         }
 
-        /* 主要內容容器 - 改用 Grid 佈局 */
+        /* --- 重點修改：容器改回 Flexbox 以完美置中 --- */
         .container {
             max-width: 1200px;
-            margin: -60px auto 50px; /* 向上重疊 Header */
+            margin: -80px auto 50px; /* 向上重疊 Header */
             padding: 20px;
-            position: relative; /* 確保在 header 弧線之上 */
+            position: relative;
+            z-index: 10; /* 確保浮在 header 上 */
             
-            /* --- 重點修改：CSS Grid 設定 --- */
-            display: grid;
-            /* 自動填滿欄位，每欄至少 320px 寬，有空間就平均分配 */
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 40px; /* 卡片間距加大 */
-            justify-items: center; /* 讓卡片在自己的格子裡置中 */
+            display: flex;
+            flex-wrap: wrap; /* 允許換行 */
+            justify-content: center; /* ★關鍵：讓所有卡片水平置中 */
+            gap: 40px; /* 設定卡片之間的固定距離，避免重疊 */
         }
 
-        /* 卡片通用樣式 */
+        /* --- 重點修改：卡片寬度與間距 --- */
         .card {
             background: white;
-            border-radius: 20px; /* 更圓潤的邊角 */
+            border-radius: 20px;
             box-shadow: var(--card-shadow);
             overflow: hidden;
-            width: 100%; /* 寬度佔滿網格單元 */
-            max-width: 380px; /* 但不超過這個最大寬度 */
+            
+            /* Flex 設定 */
+            flex: 0 1 320px; /* 基礎寬度 320px，允許縮小但不允許過度放大 */
+            width: 320px;    /* 強制寬度，確保整齊 */
+            
             text-align: center;
             padding: 40px 30px;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* --- 重點修改：更 Q 彈的動畫曲線 --- */
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin: 10px; /* 額外邊距，防止在舊瀏覽器 gap 失效時重疊 */
         }
 
-        /* 運行中卡片的互動效果 - 重點修改 */
         .card.active {
             cursor: pointer;
         }
 
         .card.active:hover {
-            /* 上浮幅度變大，並稍微放大 */
-            transform: translateY(-15px) scale(1.03);
-            /* 陰影變得更深更廣 */
+            transform: translateY(-15px); /* 只向上浮動，不放大，避免視覺重疊 */
             box-shadow: var(--hover-shadow);
+            z-index: 20; /* 確保浮起時壓在其他元素上面 */
         }
         
-        /* 按鈕點擊時的微小回饋 */
         .card.active:active {
-            transform: translateY(-12px) scale(1.01);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-             transition: all 0.1s ease;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-
-        /* 建置中卡片樣式 */
+        /* 以下樣式維持不變 */
         .card.inactive {
             background: var(--inactive-gray);
-            box-shadow: none; /* 建置中沒有陰影，看起來更平面 */
-            border: 2px solid transparent; /* 預留邊框位置 */
+            box-shadow: none;
+            border: 2px solid white; /* 增加白邊讓它跟背景區分 */
         }
         
         .card.inactive .icon-container {
@@ -137,7 +137,6 @@
             fill: #f0f2f5;
         }
 
-        /* 右上角狀態標籤 */
         .status-badge {
             position: absolute;
             top: 20px;
@@ -153,7 +152,6 @@
         .badge-active { background-color: var(--manage-green); color: #006266;}
         .badge-inactive { background-color: #b2bec3; color: white; }
 
-        /* 圖示容器 */
         .icon-container {
             width: 90px;
             height: 90px;
@@ -162,23 +160,20 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 25px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); /* 圖示本身也有輕微陰影 */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        /* SVG 圖示樣式 */
         .icon-container svg {
             width: 45px;
             height: 45px;
             fill: white;
         }
         
-        /* 個別圖示顏色 (使用較柔和的顏色) */
         .icon-repair { background-color: var(--repair-red); }
         .icon-manage { background-color: var(--manage-green); }
         .icon-learn { background-color: var(--learn-yellow); }
-        .icon-learn svg { fill: #d35400; } /* 黃色背景配深色圖示比較清楚 */
+        .icon-learn svg { fill: #d35400; }
 
-        /* 卡片標題與描述 */
         .card h2 {
             margin: 10px 0;
             font-size: 1.6em;
@@ -195,12 +190,11 @@
         .card.inactive h2 { color: #636e72; }
         .card.inactive p { color: var(--inactive-text); }
 
-        /* 按鈕連結樣式 */
         .btn-link {
-            display: inline-block; /* 改為 inline-block 讓寬度自適應內容 */
+            display: inline-block;
             min-width: 180px;
             padding: 14px 25px;
-            border-radius: 50px; /* 變為膠囊狀按鈕 */
+            border-radius: 50px;
             text-decoration: none;
             color: white;
             font-weight: bold;
@@ -214,12 +208,10 @@
              transform: translateY(-2px);
         }
 
-        /* 個別按鈕顏色 */
         .btn-repair { background: linear-gradient(to right, #ff7675, #d63031); }
         .btn-manage { background: linear-gradient(to right, #55efc4, #00b894); color: #006266; }
         .btn-learn { background: linear-gradient(to right, #ffeaa7, #fdcb6e); color: #d35400; }
 
-        /* 尚未開放文字 */
         .not-available {
             margin-top: auto;
             font-weight: bold;
@@ -228,18 +220,20 @@
             font-size: 1.1em;
         }
 
-        /* 響應式設計：手機版調整 */
+        /* 響應式調整 */
         @media (max-width: 768px) {
             .header h1 { font-size: 2em; }
             .header::after { height: 60px; bottom: -30px; }
             .container {
-                margin-top: -40px;
-                padding: 15px;
-                gap: 25px;
+                margin-top: -50px;
+                padding: 10px;
+                gap: 20px;
             }
-            /* 手機版強制一欄 */
-            .container { grid-template-columns: 1fr; } 
-            .card { max-width: 100%; }
+            .card { 
+                flex: 0 1 100%; /* 手機上佔滿 */
+                width: auto;
+                margin: 0 0 20px 0;
+            }
         }
     </style>
 </head>
