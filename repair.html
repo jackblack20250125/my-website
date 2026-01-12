@@ -7,10 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
     <style>
-      /* --- CSS 樣式維持原本設定 --- */
+      /* --- CSS 樣式 --- */
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       .spinning { animation: spin 1s linear infinite; display: inline-block; }
       .refresh-btn:disabled { color: #9ca3af; cursor: not-allowed; }
@@ -104,41 +103,6 @@
       .quick-reply-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
       .btn-quick { font-size: 0.8rem; padding: 4px 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.2s; }
       .btn-quick:hover { background: #e5e7eb; border-color: #9ca3af; color: #111827; }
-      
-      /* 簽名板樣式 */
-      .signature-container {
-        border: 2px dashed #cbd5e1;
-        border-radius: 12px;
-        background: #fcfcfc;
-        margin-bottom: 15px;
-        position: relative;
-        overflow: hidden;
-      }
-      .signature-pad {
-        width: 100%;
-        height: 200px;
-        background-color: white;
-        touch-action: none;
-      }
-      .signature-footer {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 10px;
-        background: #f1f5f9;
-        font-size: 0.85rem;
-        color: #64748b;
-        align-items: center;
-      }
-      .btn-clear-sig {
-        background: none;
-        border: 1px solid #cbd5e1;
-        padding: 2px 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        color: #ef4444;
-        font-size: 0.8rem;
-      }
-      .btn-clear-sig:hover { background: #fee2e2; }
     </style>
   </head>
   <body>
@@ -205,17 +169,6 @@
             <input type="file" id="fileInput">
             <input type="hidden" name="myFile" id="hiddenFile"><input type="hidden" name="mimeType" id="hiddenMime"><input type="hidden" name="fileName" id="hiddenName">
           </div>
-
-          <div class="form-group">
-            <label>報修人簽名 <span style="color:red">*</span></label>
-            <div class="signature-container">
-              <canvas id="signature-pad" class="signature-pad"></canvas>
-              <div class="signature-footer">
-                <span>請在上方簽名</span>
-                <button type="button" class="btn-clear-sig" onclick="clearSignature()">清除重簽</button>
-              </div>
-            </div>
-          </div>
           
           <input type="hidden" name="finalName" id="finalName">
           <button type="submit" class="btn-submit" id="submitBtn"><i class="bi bi-send-fill"></i> 提交報修單</button>
@@ -263,12 +216,10 @@
       let adminPwd = "";
       let currentRepairData = [];
       let isDataLoaded = false;
-      let signaturePad; 
 
       window.onload = function() { 
           initSeatOptions();
-          initSignaturePad();
-          renderSystemOptions(); // ★直接載入學制選項，不需等待後端
+          renderSystemOptions(); // 直接載入學制選項
 
           const inputs = document.querySelectorAll('input, textarea');
           inputs.forEach(input => {
@@ -303,22 +254,6 @@
               throw error;
           }
       }
-
-      // === 簽名板功能 ===
-      function initSignaturePad() {
-          const canvas = document.getElementById('signature-pad');
-          function resizeCanvas() {
-            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-          }
-          window.addEventListener("resize", resizeCanvas);
-          resizeCanvas();
-          signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)', penColor: 'rgb(0, 0, 0)' });
-      }
-
-      function clearSignature() { signaturePad.clear(); }
 
       function switchPage(p) {
         document.querySelectorAll('.page-section').forEach(e => e.classList.remove('active'));
@@ -422,7 +357,7 @@
 
           let dName=maskName(item.name);
           let fLink=item.file&&item.file.includes('http')?`<a href="${item.file}" target="_blank" style="color:#2563eb;margin-left:5px"><i class="bi bi-paperclip"></i> 附件</a>`:'';
-          let sLink=item.signFile&&item.signFile.includes('http')?`<a href="${item.signFile}" target="_blank" style="color:#059669;margin-left:5px"><i class="bi bi-pen-fill"></i> 簽名</a>`:'';
+          
           let note= (item.summary||item.finishTime||item.handler)?`<div class="card-admin-note">${item.finishTime?`<div><i class="bi bi-check-circle-fill" style="color:#10b981"></i> 完成: ${item.finishTime}</div>`:''}${item.handler?`<div><i class="bi bi-person-badge-fill"></i> 處理: ${item.handler}</div>`:''}${item.summary?`<div><i class="bi bi-wrench"></i> 概況: ${item.summary}</div>`:''}</div>`:'';
           let contactInfo = "";
           if (isAdmin) {
@@ -433,7 +368,7 @@
           html+=`
             <div class="${cardClass}">
               <div class="card-header"><div style="font-weight:700">${item.location}</div><div class="card-badge ${stClass}">${item.status}</div></div>
-              <div class="card-info"><div style="color:#2563eb;margin-bottom:4px"><i class="bi bi-clock"></i> ${item.time}</div><div><i class="bi bi-person"></i> ${dName} ${fLink} ${sLink}</div></div>
+              <div class="card-info"><div style="color:#2563eb;margin-bottom:4px"><i class="bi bi-clock"></i> ${item.time}</div><div><i class="bi bi-person"></i> ${dName} ${fLink}</div></div>
               ${contactInfo}  <div class="card-desc">${item.desc}</div>${note}
               <div class="admin-actions">
                 <button class="btn-sm btn-process" onclick="openModal(${index}, '處理中')"><i class="bi bi-tools"></i> 處理</button>
@@ -532,7 +467,7 @@
         s.innerHTML += '<option value="其他">其他</option>';
       }
 
-      // ★★★ 修改：直接寫死學制選項 ★★★
+      // 學制選項
       function renderSystemOptions(){
           const s = document.getElementById('stuSystem');
           s.innerHTML = '<option value="">請選擇學制</option>';
@@ -540,7 +475,7 @@
           s.innerHTML += '<option value="國中部">國中部</option>';
       }
 
-      // ★★★ 修改：根據選擇的學制產生特定班級 ★★★
+      // 班級產生邏輯
       function updateClassOptions(){
           const system = document.getElementById('stuSystem').value;
           const classSelect = document.getElementById('stuClass');
@@ -644,11 +579,8 @@
           finalNameInput.value = sys + cls + "班" + seat + "號"; 
         }
 
-        if(signaturePad.isEmpty()){ Swal.fire('請簽名', '請在簽名框中簽名後再提交', 'warning'); return; }
-        const signData = signaturePad.toDataURL(); 
-
         const btn = document.getElementById('submitBtn'); btn.disabled = true;
-        Swal.fire({ title: '正在提交報修單...', html: '正在上傳附件與簽名檔，請稍後', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ title: '正在提交報修單...', html: '正在上傳附件並寫入資料，請稍後', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 
         const formData = {
             userEmail: document.getElementById('userEmail').value,
@@ -658,14 +590,14 @@
             extension: document.querySelector('[name="extension"]').value,
             myFile: document.getElementById('hiddenFile').value,
             mimeType: document.getElementById('hiddenMime').value,
-            fileName: document.getElementById('hiddenName').value,
-            signData: signData 
+            fileName: document.getElementById('hiddenName').value
+            // signData 已移除
         };
 
         callApi('submitForm', formData, 'POST').then(res => {
                 localStorage.removeItem('LCHS_REPAIR_CACHE'); isDataLoaded = false;
                 Swal.fire({ icon: 'success', title: '報修成功', timer: 1500, showConfirmButton: false }).then(() => {
-                    f.reset(); document.getElementById('hiddenFile').value = ""; signaturePad.clear(); btn.disabled = false; switchPage('list');
+                    f.reset(); document.getElementById('hiddenFile').value = ""; btn.disabled = false; switchPage('list');
                 });
             }).catch(e => { Swal.fire('提交失敗', e.message, 'error'); btn.disabled = false; });
       }
