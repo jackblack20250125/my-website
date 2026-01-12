@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速報修系統</title>
+    <style>
+        body { font-family: "微軟正黑體", sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding-top: 50px; }
+        .form-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; }
+        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background-color: #4facfe; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #00f2fe; }
+        .loading { opacity: 0.6; pointer-events: none; } /* 送出時變灰 */
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>🛠️ 快速報修單</h2>
+    <form id="repairForm">
+        <label>報修人姓名</label>
+        <input type="text" name="name" required placeholder="請輸入姓名">
+        
+        <label>地點 / 班級</label>
+        <input type="text" name="location" required placeholder="例如：301教室">
+        
+        <label>問題描述</label>
+        <textarea name="issue" rows="4" required placeholder="例如：投影機無法顯示"></textarea>
+        
+        <button type="submit" id="submitBtn">送出報修</button>
+    </form>
+</div>
+
+<script>
+    // 這裡就是那個「跑腿小弟」 (JavaScript)
+    const form = document.getElementById('repairForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // ★★★ 請將下方的網址換成你剛才部署拿到的 GAS 網址 ★★★
+    const scriptURL = 'AKfycbwbvjzGwPugawFew_EUeGT7SfBYFZ655QIlaoy6e_maggrp2mYxtfZ_Oa7xjpFRjteH'; 
+
+    form.addEventListener('submit', e => {
+        e.preventDefault(); // 阻止表單原本的跳頁行為
+        
+        // 按鈕變更狀態
+        submitBtn.textContent = '傳送中...';
+        submitBtn.classList.add('loading');
+
+        // 打包資料
+        let formData = new FormData(form);
+
+        // 使用 fetch API 傳送 (AJAX 技術)
+        fetch(scriptURL, { method: 'POST', body: formData})
+            .then(response => {
+                alert('報修成功！我們已收到您的通知。');
+                form.reset(); // 清空表單
+                submitBtn.textContent = '送出報修';
+                submitBtn.classList.remove('loading');
+            })
+            .catch(error => {
+                alert('糟糕！傳送失敗，請稍後再試。');
+                console.error('Error!', error.message);
+                submitBtn.textContent = '送出報修';
+                submitBtn.classList.remove('loading');
+            });
+    });
+</script>
+
+</body>
+</html>
