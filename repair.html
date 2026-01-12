@@ -1,71 +1,836 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<html>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快速報修系統</title>
+    <title>高雄市立路竹高中資訊報修系統V2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
     <style>
-        body { font-family: "微軟正黑體", sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding-top: 50px; }
-        .form-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #333; }
-        input, textarea, button { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background-color: #4facfe; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #00f2fe; }
-        .loading { opacity: 0.6; pointer-events: none; } /* 送出時變灰 */
+      /* --- CSS 樣式維持您原本的設定，並新增簽名板樣式 --- */
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      .spinning { animation: spin 1s linear infinite; display: inline-block; }
+      .refresh-btn:disabled { color: #9ca3af; cursor: not-allowed; }
+      *, *::before, *::after { box-sizing: border-box; }
+      .swal2-html-container { text-align: left !important; }  
+      :root { --primary:#2563eb; --bg:#f3f4f6; --text:#1f2937; }
+      body { font-family:'Inter','Noto Sans TC',sans-serif; background:var(--bg); margin:0; padding:20px 10px 150px 10px; min-height:100vh; color:var(--text); overflow-x: hidden; width: 100%; }
+      .container { width:100%; max-width:600px; background:#fff; border-radius:20px; padding:30px; box-shadow:0 10px 25px rgba(0,0,0,0.1); position:relative; margin: 0 auto; }
+      .header { text-align:center; margin-bottom:20px; padding: 0 40px; position: relative; }
+      h2 { margin:0; font-weight:800; font-size:1.5rem; color:#111827; line-height: 1.4; }
+      
+      .admin-lock { position:absolute; right: -15px; top: -15px; cursor:pointer; color: #f59e0b; padding: 10px; font-size: 1.8rem; transition: transform 0.2s; z-index: 10; }
+      .admin-lock:hover { transform: scale(1.1); }
+      .admin-lock.unlocked { color:#2563eb; }
+
+      @media (max-width: 600px) {
+        .container { padding: 20px 15px; }
+        .admin-lock { position: relative; right: auto; top: auto; display: block; margin: 10px auto 0 auto; width: fit-content; font-size: 1.6rem; padding: 5px; z-index: auto; }
+      }
+      
+      .nav-tabs { display:flex; background:#f1f5f9; padding:4px; border-radius:12px; margin-bottom:20px; }
+      .nav-item { flex:1; text-align:center; padding:10px; cursor:pointer; border-radius:8px; font-weight:600; color:#6b7280; display:flex; gap:6px; justify-content:center; transition: all 0.2s; }
+      .nav-item.active { background:#fff; color:#2563eb; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+      
+      .page-section { display:none; } .page-section.active { display:block; animation:fadeIn 0.3s; }
+      @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+      
+      .form-group { margin-bottom:15px; } label { display:block; margin-bottom:5px; font-weight:600; }
+      input, select, textarea { width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px; font-size: 1rem; }
+      
+      .btn-submit { width:100%; padding:14px; background:#2563eb; color:#fff; border:none; border-radius:12px; font-weight:600; font-size: 1rem; cursor:pointer; display:flex; justify-content:center; align-items: center; gap:8px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); transition: background 0.2s, transform 0.1s; }
+      .btn-submit:hover { background:#1d4ed8; transform: translateY(-1px); }
+      .btn-submit:active { transform: translateY(0); }
+      .btn-submit:disabled { background:#9ca3af; box-shadow: none; transform: none; }
+
+      .stats-container { display:flex; gap:10px; margin-bottom:15px; }
+      .stat-box { flex:1; background:#fff; padding:10px; border-radius:12px; text-align:center; border:1px solid #e5e7eb; box-shadow:0 2px 4px rgba(0,0,0,0.02); }
+      .stat-num { font-size:1.5rem; font-weight:800; color:#2563eb; line-height:1.2; }
+      @media (max-width: 400px) { .stat-num { font-size: 1.2rem; } }
+      .stat-label { font-size:0.8rem; color:#6b7280; font-weight:600; }
+      .stat-pending .stat-num { color:#ef4444; }
+
+      .repair-card { background:#fff; border:1px solid #f3f4f6; border-radius:12px; padding:15px; margin-bottom:12px; transition:0.2s; position: relative; overflow: hidden; }
+      .repair-card:hover { border-color:#bfdbfe; }
+      
+      .repair-card.card-new { background: #fff5f5; border: 2px solid #fca5a5; box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.1); }
+      .repair-card.card-new::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #e11d48; }
+      .repair-card.card-new .card-admin-note { background: #fff; border-color: #fca5a5; }
+
+      .repair-card.card-processing { background: #fffbeb; border: 2px solid #fcd34d; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1); }
+      .repair-card.card-processing::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #d97706; }
+      .repair-card.card-processing .card-admin-note { background: #fff; border-color: #fcd34d; }
+
+      .repair-card.card-done { background: #eff6ff; border: 2px solid #60a5fa; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1); }
+      .repair-card.card-done::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #2563eb; }
+      .repair-card.card-done .card-admin-note { background: #fff; border-color: #93c5fd; }
+
+      .card-header { display:flex; justify-content:space-between; margin-bottom:8px; }
+      .card-badge { font-size:0.75rem; padding:4px 8px; border-radius:20px; font-weight:700; white-space: nowrap; }
+      
+      .status-pending { background:#f3f4f6; color:#4b5563; }
+      .status-new { background:#ffe4e6; color:#be123c; }       
+      .status-processing { background:#fef3c7; color:#b45309; } 
+      .status-done { background:#dbeafe; color:#1e40af; }       
+      .status-error { background:#fee2e2; color:#ef4444; }
+      
+      .card-info { font-size:0.9rem; color:#6b7280; line-height:1.6; }
+      .card-desc { margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb; color:#111827; }
+      .card-admin-note { margin-top:10px; background:#fff; padding:8px; border-radius:8px; font-size:0.85rem; border-left:3px solid #cbd5e1; box-shadow: inset 0 0 4px rgba(0,0,0,0.05); }
+
+      .admin-actions { margin-top:10px; pt:10px; border-top:1px solid #f3f4f6; display:none; gap:8px; }
+      .is-admin .admin-actions { display:flex; }
+      .btn-sm { flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; font-weight:600; display:flex; justify-content:center; gap:4px; }
+      .btn-done { background:#d1fae5; color:#065f46; } .btn-process { background:#dbeafe; color:#1e40af; }
+      .refresh-btn { background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600; display:block; margin:0 auto 5px; }
+      .swal2-input-label { margin-top: 10px; font-weight: 600; color: #374151; display: block; text-align: left; font-size: 0.9rem; }
+      
+      .handler-options { display:flex; gap: 15px; margin-top: 10px; justify-content: center; flex-wrap: nowrap; }
+      .handler-opt-label { display:flex; align-items:center; gap: 6px; cursor:pointer; font-size: 1rem; white-space: nowrap; padding: 5px; }
+      .handler-opt-label input[type="radio"] { transform: scale(1.2); margin: 0; width: auto; }
+
+      #sw-hdl { margin: 10px auto !important; display: none; width: 80%; }
+      .swal2-textarea { width: 90% !important; box-sizing: border-box !important; font-size: 0.95rem !important; margin-top: 5px !important; height: 100px !important; resize: vertical; }
+
+      .email-toggle-label { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; color: #4b5563; margin-bottom: 5px; }
+      .email-toggle-label input[type="checkbox"] { width: 18px; height: 18px; margin: 0; }
+      
+      .hidden { display:none !important; }
+      .student-row { display:flex; gap:10px; } 
+      .student-row>div { flex:1; }
+      .quick-reply-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .btn-quick { font-size: 0.8rem; padding: 4px 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.2s; }
+      .btn-quick:hover { background: #e5e7eb; border-color: #9ca3af; color: #111827; }
+      
+      /* --- 新增：簽名板樣式 --- */
+      .signature-container {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        background: #fcfcfc;
+        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+      }
+      .signature-pad {
+        width: 100%;
+        height: 200px;
+        background-color: white;
+        touch-action: none; /* 防止手機滑動頁面 */
+      }
+      .signature-footer {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 10px;
+        background: #f1f5f9;
+        font-size: 0.85rem;
+        color: #64748b;
+        align-items: center;
+      }
+      .btn-clear-sig {
+        background: none;
+        border: 1px solid #cbd5e1;
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #ef4444;
+        font-size: 0.8rem;
+      }
+      .btn-clear-sig:hover { background: #fee2e2; }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>高雄市立路竹高中資訊報修系統V2.0</h2>
+        <div style="color:#6b7280; font-size:0.9rem; margin-top:5px;">LCHS IT Services</div>
+        <div class="admin-lock" id="adminLockBtn" onclick="toggleAdminMode()"><i class="bi bi-lock-fill"></i></div>
+      </div>
+      
+      <div class="nav-tabs">
+        <div class="nav-item active" onclick="switchPage('form')" id="nav-form"><i class="bi bi-pencil-square"></i> 填寫報修</div>
+        <div class="nav-item" onclick="switchPage('list')" id="nav-list"><i class="bi bi-card-list"></i> 查詢與管理</div>
+      </div>
 
-<div class="form-container">
-    <h2>🛠️ 快速報修單</h2>
-    <form id="repairForm">
-        <label>報修人姓名</label>
-        <input type="text" name="name" required placeholder="請輸入姓名">
+      <div id="page-form" class="page-section active">
         
-        <label>地點 / 班級</label>
-        <input type="text" name="location" required placeholder="例如：301教室">
+        <div class="nav-tabs" style="width: 60%; margin: 0 auto 20px auto;">
+           <div class="nav-item active" onclick="setRole('teacher')" id="role-teacher">教職員</div>
+           <div class="nav-item" onclick="setRole('student')" id="role-student">學生</div>
+        </div>
+
+        <form id="repairForm" onsubmit="handleFormSubmit(this)">
+          
+          <div id="teacher-section" class="form-group">
+            <label>教職員姓名 <span style="color:red">*</span></label>
+            <input type="text" id="teacherName" placeholder="請輸入您的姓名">
+          </div>
+          
+          <div id="student-section" class="hidden">
+            <div class="student-row">
+              <div class="form-group">
+                <label>學制</label>
+                <select id="stuSystem" onchange="updateClassOptions()"><option value="">載入中...</option></select>
+              </div>
+              <div class="form-group">
+                <label>班級</label>
+                <select id="stuClass"><option value="">--</option></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>座號</label>
+              <select id="stuSeat"></select>
+            </div>
+          </div>
+          
+          <div class="form-group"><label>地點 <span style="color:red">*</span></label><input type="text" name="location" id="location" required></div>
+          <div class="form-group"><label>情況描述 <span style="color:red">*</span></label><textarea name="description" id="description" rows="3" required></textarea></div>
+          <div class="form-group" id="extension-group">
+            <label>分機</label>
+            <input type="text" name="extension" placeholder="無分機可留空">
+          </div>
+          
+          <div class="form-group" style="background:#f9fafb; padding:10px; border-radius:8px; border:1px solid #e5e7eb;">
+              <label class="email-toggle-label">
+                  <input type="checkbox" id="notifyToggle" onchange="toggleEmailField()">
+                  維修完成請 E-mail 通知
+              </label>
+              <input type="email" name="userEmail" id="userEmail" placeholder="請輸入您的 Email (通知用)" style="display:none; margin-top:5px;">
+          </div>
+          
+          <div class="form-group">
+            <label>故障照片或影片 <span style="font-size:0.8em;color:#aaa">(限15MB，建議拍攝重點約 5~10 秒)</span></label>
+            <input type="file" id="fileInput">
+            <input type="hidden" name="myFile" id="hiddenFile"><input type="hidden" name="mimeType" id="hiddenMime"><input type="hidden" name="fileName" id="hiddenName">
+          </div>
+
+          <div class="form-group">
+            <label>報修人簽名 <span style="color:red">*</span></label>
+            <div class="signature-container">
+              <canvas id="signature-pad" class="signature-pad"></canvas>
+              <div class="signature-footer">
+                <span>請在上方簽名</span>
+                <button type="button" class="btn-clear-sig" onclick="clearSignature()">清除重簽</button>
+              </div>
+            </div>
+          </div>
+          
+          <input type="hidden" name="finalName" id="finalName">
+          <button type="submit" class="btn-submit" id="submitBtn"><i class="bi bi-send-fill"></i> 提交報修單</button>
+        </form>
+      </div>
+
+      <div id="page-list" class="page-section">
+        <button id="refreshBtn" class="refresh-btn" onclick="loadRepairs(true)"><i class="bi bi-arrow-clockwise"></i> 重新整理列表</button>
         
-        <label>問題描述</label>
-        <textarea name="issue" rows="4" required placeholder="例如：投影機無法顯示"></textarea>
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-num" id="stat-total">-</div>
+                <div class="stat-label">總報修數</div>
+            </div>
+            <div class="stat-box" id="box-last-month">
+                <div class="stat-num" id="stat-last-month">-</div>
+                <div class="stat-label">上月維修</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="stat-month">-</div>
+                <div class="stat-label">本月新增</div>
+            </div>
+            <div class="stat-box stat-pending">
+                <div class="stat-num" id="stat-pending">-</div>
+                <div class="stat-label">未結案</div>
+            </div>
+        </div>
+
+        <div style="text-align:center; color:#6b7280; font-size:0.85rem; margin-bottom:15px; font-weight:500;">
+            (完成資料僅顯示最新 10 筆，其他案件不在此限)
+        </div>
+        <div id="repairListContainer"><div style="text-align:center;color:#9ca3af;padding:20px;">載入中...</div></div>
+      </div>
+    </div>
+
+    <script>
+      // ==========================================
+      // ★★★ 設定區：請填入您的 GAS 部署網址 ★★★
+      // ==========================================
+      const GAS_API_URL = "https://script.google.com/macros/s/您的ID/exec"; 
+      // ==========================================
+
+      let currentRole = 'teacher';
+      let schoolData = {};
+      let isAdmin = false;
+      let adminPwd = "";
+      let currentRepairData = [];
+      let isDataLoaded = false;
+      let signaturePad; // 簽名板實例
+
+      window.onload = function() { 
+          initSeatOptions();
+          initSignaturePad(); // 初始化簽名板
+          
+          // 初始載入班級與資料
+          fetchData('getClassList');
+
+          const inputs = document.querySelectorAll('input, textarea');
+          inputs.forEach(input => {
+              input.addEventListener('focus', () => {
+                  setTimeout(() => {
+                      input.scrollIntoView({behavior: 'smooth', block: 'center'});
+                  }, 300);
+              });
+          });
+      }
+
+      // === 通用 API 呼叫函式 (取代 google.script.run) ===
+      async function callApi(action, params = {}, method = 'GET') {
+          let url = GAS_API_URL;
+          let options = {};
+
+          if (method === 'GET') {
+              const query = new URLSearchParams({ ...params, action: action }).toString();
+              url += `?${query}`;
+          } else {
+              // POST 方法 (處理資料寫入)
+              // 注意：GAS Web App 的 POST 處理 CORS 比較麻煩，這裡使用 'text/plain' 內容類型
+              // 讓瀏覽器發送簡單請求 (Simple Request)，避免 Preflight (OPTIONS) 失敗
+              options = {
+                  method: 'POST',
+                  body: JSON.stringify({ action: action, ...params })
+              };
+          }
+
+          try {
+              const response = await fetch(url, options);
+              const data = await response.json();
+              if (data.status === 'error') throw new Error(data.message);
+              return data;
+          } catch (error) {
+              console.error("API Error:", error);
+              throw error;
+          }
+      }
+
+      // 初始化資料讀取
+      function fetchData(type) {
+          if (type === 'getClassList') {
+              callApi('getClassList').then(data => {
+                  schoolData = data.data;
+                  renderSystemOptions();
+              }).catch(e => console.error(e));
+          }
+      }
+
+      // === 簽名板功能 ===
+      function initSignaturePad() {
+          const canvas = document.getElementById('signature-pad');
+          // 調整 Canvas 解析度以適應視網膜螢幕
+          function resizeCanvas() {
+            const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+          }
+          window.addEventListener("resize", resizeCanvas);
+          resizeCanvas();
+
+          signaturePad = new SignaturePad(canvas, {
+             backgroundColor: 'rgb(255, 255, 255)', // 背景白
+             penColor: 'rgb(0, 0, 0)' // 筆跡黑
+          });
+      }
+
+      function clearSignature() {
+          signaturePad.clear();
+      }
+
+      function switchPage(p) {
+        document.querySelectorAll('.page-section').forEach(e => e.classList.remove('active'));
+        document.getElementById('nav-form').classList.remove('active');
+        document.getElementById('nav-list').classList.remove('active');
+        document.getElementById('page-' + p).classList.add('active');
+        document.getElementById('nav-' + p).classList.add('active');
+
+        if (p === 'list' && !isDataLoaded) {
+          loadRepairs(); 
+        }
+      }
+      
+      async function toggleAdminMode(){
+        const CACHE_KEY = 'LCHS_REPAIR_CACHE';
+        const lockIcon = document.querySelector('#adminLockBtn i');
+        const lastMonthBox = document.getElementById('box-last-month');
+
+        if(isAdmin){ 
+          // 登出
+          isAdmin=false; adminPwd=""; 
+          localStorage.removeItem(CACHE_KEY); 
+          document.getElementById('adminLockBtn').classList.remove('unlocked'); 
+          lockIcon.classList.remove('bi-unlock-fill'); lockIcon.classList.add('bi-lock-fill');
+          document.getElementById('repairListContainer').classList.remove('is-admin'); 
+          lastMonthBox.style.display = 'none'; 
+          
+          isDataLoaded = false; 
+          loadRepairs(); 
+          Swal.fire('已登出','','info'); 
+        } else {
+          // 登入
+          const {value:p} = await Swal.fire({title:'管理員登入',input:'password',confirmButtonText:'登入',showCancelButton:true});
+          if(p){ 
+            Swal.showLoading();
+            callApi('checkAdmin', { password: p }, 'POST')
+              .then(res => {
+                  if(res.valid){
+                    adminPwd=p; isAdmin=true; 
+                    localStorage.removeItem(CACHE_KEY); 
+                    document.getElementById('adminLockBtn').classList.add('unlocked'); 
+                    lockIcon.classList.remove('bi-lock-fill'); lockIcon.classList.add('bi-unlock-fill');
+                    document.getElementById('repairListContainer').classList.add('is-admin'); 
+                    lastMonthBox.style.display = 'block'; 
+                    
+                    isDataLoaded = false; 
+                    loadRepairs(); 
+                    Swal.close();
+                  } else {
+                    Swal.fire('錯誤', '密碼不正確', 'error');
+                  }
+              })
+              .catch(e => Swal.fire('錯誤', '連線失敗', 'error'));
+          }
+        }
+      }
+
+      function maskName(n) {
+        if (!n) return "";
+        if (isAdmin) return n; 
+
+        if (n.includes("班") && n.includes("號")) {
+          return n;
+        }
+
+        let suffix = "";
+        if (n.includes("老師")) suffix = " 老師";
+        else if (n.includes("教職員")) suffix = " 教職員";
+
+        let clean = n.replace(/老師|教職員| /g, "");
+
+        if (clean.length >= 2) {
+          return clean[0] + "○".repeat(clean.length - 1) + suffix;
+        }
+
+        return n;
+      }
+
+      function loadRepairs(isManual = false) {
+        const c = document.getElementById('repairListContainer');
+        const btn = document.getElementById('refreshBtn');
+        const icon = btn.querySelector('i');
+        const CACHE_KEY = 'LCHS_REPAIR_CACHE';
         
-        <button type="submit" id="submitBtn">送出報修</button>
-    </form>
-</div>
+        if (isManual) {
+          btn.disabled = true;           
+          icon.classList.add('spinning'); 
+        }
 
-<script>
-    // 這裡就是那個「跑腿小弟」 (JavaScript)
-    const form = document.getElementById('repairForm');
-    const submitBtn = document.getElementById('submitBtn');
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData && !isManual) {
+          try {
+            const cache = JSON.parse(cachedData);
+            currentRepairData = cache.data; 
+            renderStats(cache.stats);
+            renderList(cache.data);
+          } catch (e) {
+            localStorage.removeItem(CACHE_KEY);
+          }
+        } else if (!cachedData) {
+          c.innerHTML = '<div style="text-align:center;padding:20px;">載入中...</div>';
+        }
 
-    // ★★★ 請將下方的網址換成你剛才部署拿到的 GAS 網址 ★★★
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwXPFS1Z3REhdjENR2dV8jE0E3CdO3lg5Y2KQsiT7Tmvwm9ltC_XMFpAoJYkh6425HR/exec'; 
+        // 改用 fetch 呼叫
+        callApi('getRepairs')
+          .then(response => {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(response));
+              currentRepairData = response.data;
+              
+              renderStats(response.stats);
+              renderList(response.data);
+              isDataLoaded = true;
 
-    form.addEventListener('submit', e => {
-        e.preventDefault(); // 阻止表單原本的跳頁行為
+              if (isManual) {
+                icon.classList.remove('spinning');
+                btn.disabled = false;
+                const Toast = Swal.mixin({
+                  toast: true, position: 'top', showConfirmButton: false, timer: 1500, timerProgressBar: true
+                });
+                Toast.fire({ icon: 'success', title: '資料已同步更新' });
+              }
+          })
+          .catch(e => {
+              icon.classList.remove('spinning');
+              btn.disabled = false;
+              c.innerHTML = '<div style="text-align:center;color:red;padding:20px">載入失敗，請檢查網路</div>';
+          });
+      }
+
+      function renderStats(stats) {
+        if(!stats) return;
+        document.getElementById('stat-total').innerText = stats.total;
+        document.getElementById('stat-month').innerText = stats.thisMonth;
+        document.getElementById('stat-pending').innerText = stats.pending;
         
-        // 按鈕變更狀態
-        submitBtn.textContent = '傳送中...';
-        submitBtn.classList.add('loading');
+        if(stats.lastMonth !== undefined) {
+           document.getElementById('stat-last-month').innerText = stats.lastMonth;
+        }
 
-        // 打包資料
-        let formData = new FormData(form);
+        const lastMonthBox = document.getElementById('box-last-month');
+        lastMonthBox.style.display = isAdmin ? 'block' : 'none';
+      }
 
-        // 使用 fetch API 傳送 (AJAX 技術)
-        fetch(scriptURL, { method: 'POST', body: formData})
-            .then(response => {
-                alert('報修成功！我們已收到您的通知。');
-                form.reset(); // 清空表單
-                submitBtn.textContent = '送出報修';
-                submitBtn.classList.remove('loading');
+      function renderList(data){
+        const c=document.getElementById('repairListContainer');
+        if(data) currentRepairData = data; 
+        
+        if(!data||data.length===0){c.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">目前無資料<br><small>若剛送出請稍後刷新</small></div>';return;}
+        
+        let html='';
+        data.forEach((item, index)=>{
+          let cardClass = 'repair-card';
+          let stClass = 'status-pending';
+          
+          if(item.status === '報修中') {
+              cardClass += ' card-new';       
+              stClass = 'status-new';
+          } else if (item.status === '處理中') {
+              cardClass += ' card-processing'; 
+              stClass = 'status-processing';
+          } else if (item.status === '已完成') {
+              cardClass += ' card-done';       
+              stClass = 'status-done';
+          } else if (item.status === '錯誤') {
+              stClass = 'status-error';
+          }
+
+          let dName=maskName(item.name);
+          let fLink=item.file&&item.file.includes('http')?`<a href="${item.file}" target="_blank" style="color:#2563eb;margin-left:5px"><i class="bi bi-paperclip"></i> 附件</a>`:'';
+          // 顯示簽名檔連結 (如果有)
+          let sLink=item.signFile&&item.signFile.includes('http')?`<a href="${item.signFile}" target="_blank" style="color:#059669;margin-left:5px"><i class="bi bi-pen-fill"></i> 簽名</a>`:'';
+          
+          let note= (item.summary||item.finishTime||item.handler)?`<div class="card-admin-note">${item.finishTime?`<div><i class="bi bi-check-circle-fill" style="color:#10b981"></i> 完成: ${item.finishTime}</div>`:''}${item.handler?`<div><i class="bi bi-person-badge-fill"></i> 處理: ${item.handler}</div>`:''}${item.summary?`<div><i class="bi bi-wrench"></i> 概況: ${item.summary}</div>`:''}</div>`:'';
+          let contactInfo = "";
+          if (isAdmin) {
+             let extHtml = item.extension ? `<span style="margin-right:10px;"><i class="bi bi-telephone-fill"></i> 分機: ${item.extension}</span>` : "";
+             let mailHtml = item.email ? `<span><i class="bi bi-envelope-fill"></i> ${item.email}</span>` : "";
+             
+             if (extHtml || mailHtml) {
+                 contactInfo = `<div style="font-size:0.85rem; color:#4b5563; background:#f8fafc; padding:4px 8px; border-radius:4px; margin-top:5px;">
+                                   ${extHtml} ${mailHtml}
+                                </div>`;
+             }
+          }
+          html+=`
+            <div class="${cardClass}">
+              <div class="card-header"><div style="font-weight:700">${item.location}</div><div class="card-badge ${stClass}">${item.status}</div></div>
+              <div class="card-info"><div style="color:#2563eb;margin-bottom:4px"><i class="bi bi-clock"></i> ${item.time}</div><div><i class="bi bi-person"></i> ${dName} ${fLink} ${sLink}</div></div>
+              
+              ${contactInfo}  <div class="card-desc">${item.desc}</div>
+              ${note}
+              <div class="admin-actions">
+                <button class="btn-sm btn-process" onclick="openModal(${index}, '處理中')"><i class="bi bi-tools"></i> 處理</button>
+                <button class="btn-sm btn-done" onclick="openModal(${index}, '已完成')"><i class="bi bi-check-lg"></i> 結案</button>
+              </div>
+            </div>`;
+        });
+        c.innerHTML=html;
+        if(isAdmin)c.classList.add('is-admin');
+      }
+
+      function updateLocalView(index, newStatus, summary, handler) {
+         let item = currentRepairData[index];
+         item.status = newStatus;
+         item.summary = summary;
+         item.handler = handler;
+         
+         if(newStatus === '已完成') {
+             let now = new Date();
+             let timeStr = (now.getMonth()+1) + "/" + now.getDate() + " " + 
+                           now.getHours().toString().padStart(2, '0') + ":" + 
+                           now.getMinutes().toString().padStart(2, '0');
+             item.finishTime = timeStr;
+         } else {
+             item.finishTime = ""; 
+         }
+
+         renderList(currentRepairData);
+
+         let pendingCount = currentRepairData.filter(d => d.status !== '已完成' && d.status !== '錯誤').length;
+         document.getElementById('stat-pending').innerText = pendingCount;
+         
+        const CACHE_KEY = 'LCHS_REPAIR_CACHE';
+        const currentStats = {
+            total: document.getElementById('stat-total').innerText,
+            thisMonth: document.getElementById('stat-month').innerText,
+            pending: document.getElementById('stat-pending').innerText,
+            lastMonth: document.getElementById('stat-last-month').innerText
+        };
+        
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: currentRepairData,
+            stats: currentStats
+          }));
+          
+          Swal.fire({
+              icon: 'success', title: '更新成功', text: '狀態已即時更新',
+              timer: 1500, showConfirmButton: false
+          });
+      }
+
+      window.updateHandlerInput = function(val) {
+          const input = document.getElementById('sw-hdl');
+          if (val === '其他') {
+              input.style.display = 'block';
+              input.value = '';
+              input.focus();
+          } else {
+              input.style.display = 'none';
+              input.value = val;
+          }
+      }
+
+      async function openModal(index, targetSt){
+        const item = currentRepairData[index];
+        if(!item) return;
+
+        const currentSummary = item.summary || "";
+        const currentHandler = item.handler || "資訊組";
+        const isDefaultHandler = (currentHandler === "資訊組" || currentHandler === "駐點工程師");
+        const showOtherInput = !isDefaultHandler && currentHandler !== "";
+
+        const commonReplies = ["已恢復正常使用", "設備重啟後正常", "加入Radius認證", "重設密碼", "硬體故障報修廠商", "已調整設定參數", "設定IE模式", "設定印表機"];
+        
+        let quickReplyHtml = '<div class="quick-reply-container">';
+        commonReplies.forEach(text => {
+          quickReplyHtml += `<button type="button" class="btn-quick" onclick="addQuickText('${text}')">${text}</button>`;
+        });
+        quickReplyHtml += '</div>';
+
+        const infoHtml = `<div style="background:#eff6ff;padding:10px;border-radius:6px;text-align:left;font-size:0.9em;margin-bottom:10px;color:#1e40af">
+            <div style="margin-bottom:4px"><strong>報修:</strong> ${item.name}</div>
+            <div style="margin-bottom:4px"><strong>地點:</strong> ${item.location}</div>
+            <div><strong>狀況:</strong> ${item.desc}</div>
+        </div>`;
+        
+        let summaryFieldHtml = `<label class="swal2-input-label">處理概況 ${targetSt === '已完成' ? '(結案確認)' : ''}</label>
+            <textarea id="sw-sum" class="swal2-textarea" placeholder="例如：重灌，並更換網路線..." style="resize: vertical;">${currentSummary}</textarea>
+            ${quickReplyHtml}`; 
+
+        const handlerFieldHtml = `
+            <label class="swal2-input-label">處理者</label>
+            <div class="handler-options">
+                <label class="handler-opt-label"><input type="radio" name="hdl_opt" value="資訊組" ${currentHandler === '資訊組' ? 'checked' : ''} onchange="updateHandlerInput(this.value)"> 資訊組</label>
+                <label class="handler-opt-label"><input type="radio" name="hdl_opt" value="駐點工程師" ${currentHandler === '駐點工程師' ? 'checked' : ''} onchange="updateHandlerInput(this.value)"> 駐點工程師</label>
+                <label class="handler-opt-label"><input type="radio" name="hdl_opt" value="其他" ${showOtherInput ? 'checked' : ''} onchange="updateHandlerInput(this.value)"> 其他</label>
+            </div>
+            <input id="sw-hdl" class="swal2-input" value="${currentHandler}" placeholder="輸入處理者姓名" style="display: ${showOtherInput ? 'block' : 'none'}; margin: 10px auto !important; width: 80%;">
+        `;
+
+        const {value:res} = await Swal.fire({
+          title: '設為'+targetSt, 
+          html: infoHtml + summaryFieldHtml + handlerFieldHtml,
+          focusConfirm:false, showCancelButton:true, width: '600px',
+          customClass: { htmlContainer: 'text-left-align' },
+          didOpen: () => {
+            const input = document.getElementById('sw-sum');
+            if (input) {
+              input.focus();
+              const len = input.value.length;
+              input.setSelectionRange(len, len);
+              input.scrollTop = input.scrollHeight;
+            }
+          },
+          preConfirm:()=>{
+             const sum = document.getElementById('sw-sum').value; 
+             const hdl = document.getElementById('sw-hdl').value;
+             if(!hdl) { Swal.showValidationMessage('請輸入或選擇處理者'); return false; }
+             return [sum, hdl];
+          }
+        });
+        
+        if(res){
+          // 先做本地樂觀更新
+          updateLocalView(index, targetSt, res[0], res[1]);
+          
+          // 後端同步
+          callApi('updateStatus', {
+              rowIndex: item.rowIndex,
+              status: targetSt,
+              password: adminPwd,
+              summary: res[0],
+              handler: res[1]
+          }, 'POST').catch(e => {
+               Swal.fire('同步失敗', '資料寫入失敗', 'error');
+               loadRepairs(); 
+          });
+        }
+      }
+
+      function initSeatOptions() {
+        const s = document.getElementById('stuSeat');
+        s.innerHTML = '<option value="">座號</option>';
+        for (let i = 1; i <= 40; i++) {
+          let val = i < 10 ? '0' + i : i;
+          s.innerHTML += `<option value="${val}">${val}</option>`;
+        }
+        s.innerHTML += '<option value="其他">其他</option>';
+      }
+      function renderSystemOptions(){const s=document.getElementById('stuSystem');s.innerHTML='<option value="">學制</option>';for(let k in schoolData)s.innerHTML+=`<option value="${k}">${k}</option>`;}
+      function updateClassOptions(){const s=document.getElementById('stuSystem').value,c=document.getElementById('stuClass');c.innerHTML='<option value="">班級</option>';if(s&&schoolData[s])schoolData[s].sort().forEach(cl=>c.innerHTML+=`<option value="${cl}">${cl}班</option>`);}
+      
+      function setRole(r){
+        currentRole=r; 
+        document.getElementById('role-teacher').classList.toggle('active', r === 'teacher');
+        document.getElementById('role-student').classList.toggle('active', r === 'student');
+        if(r === 'teacher') {
+            document.getElementById('teacher-section').classList.remove('hidden'); 
+            document.getElementById('extension-group').classList.remove('hidden'); 
+            document.getElementById('student-section').classList.add('hidden');    
+            if(document.getElementById('location').value === "本班教室") document.getElementById('location').value = "";
+        } else {
+            document.getElementById('teacher-section').classList.add('hidden');    
+            document.getElementById('extension-group').classList.add('hidden');    
+            document.getElementById('student-section').classList.remove('hidden'); 
+            document.getElementById('location').value = "本班教室";
+            document.querySelector('[name="extension"]').value = "";
+        }
+      }
+
+      function toggleEmailField() {
+        const checkbox = document.getElementById('notifyToggle');
+        const emailInput = document.getElementById('userEmail');
+        if (checkbox.checked) {
+          emailInput.style.display = 'block';
+          emailInput.focus();
+        } else {
+          emailInput.style.display = 'none';
+          emailInput.value = ''; 
+        }
+      }
+      
+      document.getElementById('fileInput').addEventListener('change', function() {
+        let f = this.files[0];
+        if (!f) return;
+        if (f.size > 15 * 1024 * 1024) {
+          Swal.fire('檔案過大', '限15MB', 'warning');
+          this.value = ""; return;
+        }
+        if (f.type.match('image.*')) {
+          let reader = new FileReader();
+          reader.onload = function(e) {
+            let img = new Image();
+            img.onload = function() {
+              let canvas = document.createElement('canvas');
+              let MAX_WIDTH = 1000;
+              let scale = MAX_WIDTH / img.width;
+              canvas.width = MAX_WIDTH;
+              canvas.height = img.height * scale;
+              let ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              let dataurl = canvas.toDataURL('image/jpeg', 0.7);
+              document.getElementById('hiddenFile').value = dataurl.split(',')[1];
+              document.getElementById('hiddenMime').value = 'image/jpeg';
+              document.getElementById('hiddenName').value = f.name.replace(/\.[^/.]+$/, "") + ".jpg";
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(f);
+        } else {
+          let r = new FileReader();
+          r.onload = e => {
+            document.getElementById('hiddenFile').value = e.target.result.split(',')[1];
+            document.getElementById('hiddenMime').value = f.type;
+            document.getElementById('hiddenName').value = f.name;
+          };
+          r.readAsDataURL(f);
+        }
+      });
+      
+      async function handleFormSubmit(f) {
+        event.preventDefault();
+        const finalNameInput = document.getElementById('finalName');
+        
+        if (currentRole === 'teacher') {
+          const tName = document.getElementById('teacherName').value.trim();
+          if (!tName) { Swal.fire('請輸入姓名', '', 'warning'); return; }
+          finalNameInput.value = tName;
+        } else {
+          const sys = document.getElementById('stuSystem').value;
+          const cls = document.getElementById('stuClass').value;
+          const seat = document.getElementById('stuSeat').value;
+          if (!sys || !cls || !seat) { Swal.fire('請完整選擇學制、班級與座號', '', 'warning'); return; }
+          finalNameInput.value = sys + cls + "班" + seat + "號"; 
+        }
+
+        // 檢查簽名
+        if(signaturePad.isEmpty()){
+            Swal.fire('請簽名', '請在簽名框中簽名後再提交', 'warning');
+            return;
+        }
+        const signData = signaturePad.toDataURL(); // 取得簽名檔 Base64
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        
+        Swal.fire({
+          title: '正在提交報修單...',
+          html: '正在上傳附件與簽名檔，請稍後',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+
+        // 收集表單資料
+        const formData = {
+            userEmail: document.getElementById('userEmail').value,
+            finalName: finalNameInput.value,
+            description: document.getElementById('description').value,
+            location: document.getElementById('location').value,
+            extension: document.querySelector('[name="extension"]').value,
+            myFile: document.getElementById('hiddenFile').value,
+            mimeType: document.getElementById('hiddenMime').value,
+            fileName: document.getElementById('hiddenName').value,
+            signData: signData // 新增：傳送簽名資料
+        };
+
+        // 改用 fetch API 提交
+        callApi('submitForm', formData, 'POST')
+            .then(res => {
+                localStorage.removeItem('LCHS_REPAIR_CACHE');
+                isDataLoaded = false;
+                
+                Swal.fire({ icon: 'success', title: '報修成功', timer: 1500, showConfirmButton: false }).then(() => {
+                    f.reset();
+                    document.getElementById('hiddenFile').value = "";
+                    signaturePad.clear(); // 清空簽名
+                    btn.disabled = false;
+                    switchPage('list');
+                });
             })
-            .catch(error => {
-                alert('糟糕！傳送失敗，請稍後再試。');
-                console.error('Error!', error.message);
-                submitBtn.textContent = '送出報修';
-                submitBtn.classList.remove('loading');
+            .catch(e => {
+                Swal.fire('提交失敗', e.message, 'error');
+                btn.disabled = false;
             });
-    });
-</script>
+      }
 
-</body>
+      window.addQuickText = function(text) {
+        const textarea = document.getElementById('sw-sum');
+        if (!textarea) return;
+        const oldVal = textarea.value.trim();
+        if (oldVal === "") textarea.value = text;
+        else textarea.value = oldVal + "，" + text;
+        textarea.focus();
+        const len = textarea.value.length;
+        textarea.setSelectionRange(len, len);
+        textarea.scrollTop = textarea.scrollHeight;
+      };
+    </script>
+  </body>
 </html>
