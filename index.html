@@ -1,10 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-    <title>我的第一個網頁</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資訊服務入口網</title>
+    <style>
+        body {
+            font-family: "微軟正黑體", Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        ul {
+            list-style-type: none; /* 移除原本的黑點 */
+            padding: 0;
+        }
+        li {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        li:hover {
+            background-color: #f9f9f9;
+        }
+        a {
+            text-decoration: none; /* 移除底線 */
+            color: #0066cc;
+            font-weight: bold;
+            font-size: 1.2em;
+            display: block; /* 讓整個區塊都能點擊 */
+        }
+        .unfinished {
+            color: #999;
+            cursor: default;
+        }
+        .status {
+            font-size: 0.8em;
+            color: #e74c3c;
+            margin-left: 10px;
+            border: 1px solid #e74c3c;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <h1>你好！這是我的 GitHub 個人網站</h1>
-    <p>我成功發佈網頁了！🎉</p>
+
+    <div class="container">
+        <h1>🛠️ 資訊服務入口網</h1>
+        
+        <ul>
+            <li>
+                <a href="https://script.google.com/a/macros/lchs.kh.edu.tw/s/AKfycbzSTzt4r0HLYtDF3Jw-gEEA07ZN7WRQ0-gR4YWpyoTVcM5muhIVGqoAzfzMqDKpQCLjUA/exec" target="_blank">
+                    資訊報修系統
+                </a>
+            </li>
+            
+            <li>
+                <a href="https://script.google.com/macros/s/AKfycbx03QtyZZU34LnxCdD6pF1i-XFGfoddCs6fr9Q96NXt5Ko64euQJ1e0OrpxXfFcRJ8/exec" target="_blank">
+                    資訊物品管理系統
+                </a>
+            </li>
+            
+            <li>
+                <a href="https://script.google.com/macros/s/AKfycbxAWulpRiVMiwYUSj5IFpc-9jctUAqoaylK6p7B9JZU7CgubeZiIugjIAfttoAAn7yq/exec" target="_blank">
+                    居家學習服務載具
+                </a>
+            </li>
+
+            <li class="unfinished">
+                主機財產管理系統 <span class="status">建置中</span>
+            </li>
+            
+            <li class="unfinished">
+                資通安全保密條款 <span class="status">建置中</span>
+            </li>
+        </ul>
+    </div>
+
 </body>
 </html>
