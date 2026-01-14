@@ -73,6 +73,14 @@
   </div>
 
   <div id="method-camera" class="search-method">
+    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; background: #eee; padding: 8px; border-radius: 8px;">
+        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer;">
+        <input type="radio" name="scanType" value="normal" checked onclick="restartScanner()"> 一般條碼
+        </label>
+        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer;">
+        <input type="radio" name="scanType" value="long" onclick="restartScanner()"> 長條碼
+        </label>
+    </div>
     <div id="reader"></div>
     <div id="scanStatus">等待掃描中...</div>
   </div>
@@ -238,12 +246,25 @@
     if (!html5QrCode) {
       html5QrCode = new Html5Qrcode("reader");
     }
+        // --- 修改開始 ---
+    // 檢查目前選中的是哪種模式
+    const scanType = document.querySelector('input[name="scanType"]:checked').value;
+    let qrBoxConfig;
     
+    if (scanType === 'long') {
+        // 長條碼模式：更寬、更扁 (350x100)
+        qrBoxConfig = { width: 320, height: 100 };
+    } else {
+        // 一般模式：原有的設定 (250x150)
+        qrBoxConfig = { width: 250, height: 150 };
+    }
+
     const config = { 
-      fps: 10, 
-      qrbox: { width: 250, height: 150 },
-      aspectRatio: 1.0 
+        fps: 10, 
+        qrbox: qrBoxConfig,
+        aspectRatio: 1.0 
     };
+    // --- 修改結束 ---
 
     html5QrCode.start(
       { facingMode: "environment" }, 
@@ -278,6 +299,18 @@
   function stopScanner() {
     if (html5QrCode && html5QrCode.isScanning) {
       html5QrCode.stop().then(() => { html5QrCode = null; }).catch(err=>{});
+    }
+  }
+
+  function restartScanner() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+        // 停止後清除實體，重新呼叫 start
+        html5QrCode = null; 
+        startScanner();
+        }).catch(err => console.error("停止相機失敗", err));
+    } else {
+        startScanner();
     }
   }
 
