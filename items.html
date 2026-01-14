@@ -309,7 +309,9 @@
       
       document.getElementById('barcode').value = barcodeValue;
       document.getElementById('scanStatus').innerText = "辨識成功：" + barcodeValue;
-    
+      setTimeout(() => {
+          doSearch(barcodeValue);
+        }, 500);
     // 執行搜尋
     doSearch(barcodeValue);
   })
@@ -334,6 +336,7 @@
 
   function doSearch(val) {
     if (!val) return;
+    val = val.toString().trim(); // 建議加入：確保條碼前後沒有空白或換行符號
     Swal.fire({ title: '查詢中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
     callApi('search', { barcode: val }).then(item => {
       Swal.close();
@@ -357,7 +360,11 @@
           icon: 'question', title: '找不到資料', text: `條碼「${val}」不存在。`, showCancelButton: true, confirmButtonText: '前往新增'
         }).then(res => { if (res.isConfirmed) { toggleSearchMethod('add'); document.getElementById('a_bc').value = val; } });
       }
-    }).catch(err => Swal.fire('錯誤', '連線失敗', 'error'));
+    }).catch(err => Swal.fire({
+        icon: 'error',
+        title: 'iPad 連線失敗',
+        text: '原因: ' + (err.message || err.toString()) + '。請確認網路或重新整理。'
+      }));
   }
 
   function initSignaturePad() {
