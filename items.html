@@ -285,32 +285,34 @@
   }
 
   function handlePhotoUpload(inputElement) {
-  if (inputElement.files.length === 0) return;
-  const file = inputElement.files[0];
-
-  stopScanner(); // 停止視訊流以釋放效能給圖片解碼
-
-  document.getElementById('scanStatus').innerText = "圖片解碼中...";
-  Swal.fire({ 
-      title: '正在辨識條碼...', 
-      text: '請確保條碼清晰、無反光',
-      allowOutsideClick: false, 
-      didOpen: () => { Swal.showLoading(); } 
-  });
-
-  const photoScanner = new Html5Qrcode("reader");
+    if (inputElement.files.length === 0) return;
+    const file = inputElement.files[0];
   
-  // 使用更強力的解碼模式 (true 表示開啟所有解碼引擎)
-  photoScanner.scanFileV2(file, true)
-    .then(decodedText => {
+    stopScanner(); // 停止視訊流以釋放效能給圖片解碼
+  
+    document.getElementById('scanStatus').innerText = "圖片解碼中...";
+    Swal.fire({ 
+        title: '正在辨識條碼...', 
+        text: '請確保條碼清晰、無反光',
+        allowOutsideClick: false, 
+        didOpen: () => { Swal.showLoading(); } 
+    });
+  
+    const photoScanner = new Html5Qrcode("reader");
+    
+    // 使用更強力的解碼模式 (true 表示開啟所有解碼引擎)
+    photoScanner.scanFileV2(file, true)
+    .then(result => { // 改名為 result 比較不容易混淆
       Swal.close();
-      if (navigator.vibrate) navigator.vibrate([100]);
-      document.getElementById('scanStatus').innerText = "辨識成功！";
-      document.getElementById('barcode').value = decodedText;
+      // 必須讀取 result 物件裡面的 .decodedText 屬性
+      const barcodeValue = result.decodedText; 
       
-      // 這裡如果失敗，就是 GAS API 的問題
-      doSearch(decodedText); 
-    })
+      document.getElementById('barcode').value = barcodeValue;
+      document.getElementById('scanStatus').innerText = "辨識成功：" + barcodeValue;
+    
+    // 執行搜尋
+    doSearch(barcodeValue);
+  })
     .catch(err => {
       Swal.close();
       document.getElementById('scanStatus').innerText = "辨識失敗";
