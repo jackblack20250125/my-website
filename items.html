@@ -637,8 +637,24 @@
       // Show qty to return and status update
       html += `<div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px;">
         <label style="margin-bottom:8px;">歸還數量</label>
-        <input type="number" id="qty" value="1" min="1" style="margin-bottom:15px;">
-        <label style="margin-bottom:8px;">歸還時物況判定</label>
+        <input type="number" id="qty" value="1" min="1" style="margin-bottom:15px;">`;
+
+      // Plan C: 如果有借用人，顯示下拉選單讓使用者選擇「要幫誰還」
+      if (curItem.activeBorrowers && curItem.activeBorrowers.length > 0) {
+        // 過濾掉空白與重複的名字
+        const uniqueUsers = [...new Set(curItem.activeBorrowers.filter(u => u))];
+        if (uniqueUsers.length > 0) {
+           html += `<label style="margin-bottom:8px; color:var(--color-return); font-weight:700;">目前是誰借的？(鎖定歸還對象)</label>
+            <select id="returnTargetUser" style="margin-bottom:15px; border-color:var(--color-return);">
+              <option value="">-- 自動扣最後一筆 (或請選擇) --</option>`;
+           uniqueUsers.forEach(u => {
+              html += `<option value="${u}">${u}</option>`;
+           });
+           html += `</select>`;
+        }
+      }
+
+      html += `<label style="margin-bottom:8px;">歸還時物況判定</label>
         <select id="status">
           <option value="正常" ${curItem.status==='正常'?'selected':''}>正常</option>
           <option value="完好" ${curItem.status==='完好'?'selected':''}>完好</option>
@@ -734,7 +750,8 @@
       userName: user, 
       signatureData: sigData,
       qty: document.getElementById('qty') ? parseInt(document.getElementById('qty').value) : 1,
-      itemStatus: document.getElementById('status') ? document.getElementById('status').value : curItem.status
+      itemStatus: document.getElementById('status') ? document.getElementById('status').value : curItem.status,
+      returnTargetUser: document.getElementById('returnTargetUser') ? document.getElementById('returnTargetUser').value : null // 新增：指定要幫誰還
     };
 
     callApi('submit', p).then(r => {
