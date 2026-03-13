@@ -525,6 +525,7 @@
     html5QrCode.start(
       { facingMode: "environment" }, 
       config,
+      // Success callback
       (text) => {
         if (text === lastScan) scanMatchCount++; 
         else { lastScan = text; scanMatchCount = 1; }
@@ -538,7 +539,35 @@
         }
       }
     ).catch(err => {
-      document.getElementById('scanStatus').innerText = "自動掃描啟動失敗，請允許相機權限或使用照片上傳。";
+      // ChromeOS 或部分裝置可能不認識 { facingMode: "environment" }
+      // 我們改用 getCameras() 抓取清單來啟動
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length > 0) {
+          // 嘗試抓最後一顆鏡頭 (通常是後鏡頭)，如果只有一顆就是那一顆
+          const cameraId = devices[devices.length - 1].id;
+          return html5QrCode.start(
+            cameraId, 
+            config,
+            (text) => {
+               if (text === lastScan) scanMatchCount++; 
+               else { lastScan = text; scanMatchCount = 1; }
+               document.getElementById('scanStatus').innerText = `核對中: ${scanMatchCount}/${NEED_MATCH}`;
+               if (scanMatchCount >= NEED_MATCH) {
+                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                 stopScanner();
+                 document.getElementById('scanStatus').innerText = "✅ 驗證成功！";
+                 document.getElementById('barcode').value = text;
+                 doSearch(text);
+               }
+            }
+          );
+        } else {
+             throw new Error("找不到任何相機硬體");
+        }
+      }).catch(fallbackErr => {
+          document.getElementById('scanStatus').innerText = "自動掃描啟動失敗，請允許相機權限或使用照片上傳。";
+          console.error("相機啟動錯誤:", fallbackErr);
+      });
     });
   }
 
