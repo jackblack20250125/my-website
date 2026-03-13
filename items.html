@@ -644,9 +644,9 @@
         // 過濾掉空白與重複的名字
         const uniqueUsers = [...new Set(curItem.activeBorrowers.filter(u => u))];
         if (uniqueUsers.length > 0) {
-           html += `<label style="margin-bottom:8px; color:var(--color-return); font-weight:700;">目前是誰借的？(鎖定歸還對象)</label>
+           html += `<label style="margin-bottom:8px; color:var(--color-return); font-weight:700;">目前是誰借的？(必須指定歸還對象)</label>
             <select id="returnTargetUser" style="margin-bottom:15px; border-color:var(--color-return);">
-              <option value="">-- 自動扣最後一筆 (或請選擇) --</option>`;
+              <option value="">-- 必填：請選擇要幫誰歸還 --</option>`;
            uniqueUsers.forEach(u => {
               html += `<option value="${u}">${u}</option>`;
            });
@@ -734,6 +734,12 @@
     
     if (isCanvasBlank(canvas)) {
       return Swal.fire('缺少簽名', '請在簽名板上簽署', 'warning');
+    }
+
+    // 防呆機制：若為歸還模式且有下拉選單，強制一定要選人
+    const returnTargetEl = document.getElementById('returnTargetUser');
+    if (curMode.includes('歸還') && returnTargetEl && returnTargetEl.value === "") {
+        return Swal.fire('資料不完整', '此物品正被借用中，請明確選擇「要幫誰歸還」才能準確銷帳喔！', 'warning');
     }
 
     const sigData = canvas.toDataURL("image/png");
