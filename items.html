@@ -3,169 +3,414 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>路竹高中資訊物品管理</title>
+  <title>資訊物品管理系統</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- 引入 Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --primary-red: #D32F2F; --primary-blue: #1565C0; --primary-green: #2E7D32;
-      --primary-color: var(--primary-blue);
-      --bg-gray: #f8f9fa;
+      /* Apple-like system colors */
+      --color-bg: #f5f5f7;
+      --color-card: #ffffff;
+      --color-text-main: #1d1d1f;
+      --color-text-sub: #86868b;
+      --color-border: #d2d2d7;
+      
+      /* Mode colors */
+      --color-borrow: #0071e3;    /* Blue */
+      --color-consume: #ff3b30;   /* Red */
+      --color-return: #34c759;    /* Green */
+      
+      /* Initial primary is borrow */
+      --primary-color: var(--color-borrow);
+      --primary-color-light: rgba(0, 113, 227, 0.1);
+      
+      /* Shadows */
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 8px 30px rgba(0,0,0,0.08);
+      --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+      
+      /* Rounded */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
     }
-    body { font-family: -apple-system, "Noto Sans TC", sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
-    .container { background: white; width: 100%; max-width: 600px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 10px solid var(--primary-color); box-sizing: border-box; }
-    h1 { text-align: center; color: #2C3E50; font-size: 1.4rem; margin: 0 0 15px 0; }
-    .mode-info { text-align: center; font-size: 0.9rem; margin-bottom: 20px; color: #666; }
-    #modeDisplay { color: var(--primary-color); font-weight: bold; font-size: 1.1rem; }
-    .mode-group { display: flex; gap: 8px; margin-bottom: 20px; background: #e9ecef; padding: 4px; border-radius: 10px; }
-    .mode-btn { flex: 1; padding: 12px 5px; border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; color: #495057; font-size: 0.9rem; transition: 0.2s; border: none; background: transparent; }
-    .mode-btn.active { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .mode-btn[data-mode="consume"].active { color: var(--primary-red); }
-    .mode-btn[data-mode="borrow"].active { color: var(--primary-blue); }
-    .mode-btn[data-mode="return"].active { color: var(--primary-green); }
-    .identity-toggle { display: flex; background: #e9ecef; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-    .toggle-item { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: bold; color: #6c757d; }
-    .toggle-item.active { background: white; color: var(--primary-color); }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 6px; font-weight: bold; color: #34495E; font-size: 0.95rem; }
-    input, select { width: 100%; padding: 14px; border: 1.5px solid #dee2e6; border-radius: 8px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
-    .search-box { display: flex; gap: 8px; }
-    .btn-search { width: 80px; background: #5D6D7E; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    #itemCard { margin-top: 20px; padding: 15px; border-radius: 10px; background: var(--bg-gray); border: 1px solid #dee2e6; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; background: #ced4da; }
-    #submitBtn { width: 100%; padding: 18px; border: none; border-radius: 10px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; background-color: var(--primary-color); margin-top: 25px; transition: 0.2s; }
-    #submitBtn:disabled { background-color: #adb5bd; cursor: not-allowed; }
-    .hidden { display: none; }
-    #reader { width: 100%; border-radius: 8px; overflow: hidden; background: #000; }
-    #signature-pad { width: 100%; height: 200px; border: 1px solid #ccc; background: #fff; touch-action: none; border-radius: 8px; cursor: crosshair; }
-    .sig-tools { display: flex; justify-content: space-between; padding: 5px; background: #f8f9fa; }
-    #scanStatus { text-align: center; font-size: 0.8rem; color: #e67e22; margin-top: 5px; font-weight: bold; }
-    .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .full { grid-column: span 2; }
-    .add-section { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #ced4da; margin-top: 10px; }
-    .btn-save { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Segoe UI", Roboto, sans-serif; 
+      background-color: var(--color-bg); 
+      color: var(--color-text-main);
+      margin: 0; 
+      padding: 20px 10px; 
+      display: flex; 
+      justify-content: center; 
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { 
+      background: var(--color-card); 
+      width: 100%; 
+      max-width: 600px; 
+      padding: 30px 25px; 
+      border-radius: var(--radius-lg); 
+      box-shadow: var(--shadow-md); 
+      box-sizing: border-box; 
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    /* Top decorative bar */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: var(--primary-color);
+      transition: background 0.3s ease;
+    }
+
+    h1 { 
+      text-align: center; 
+      font-weight: 700; 
+      font-size: 1.6rem; 
+      letter-spacing: -0.5px;
+      margin: 0 0 5px 0; 
+    }
+    
+    .mode-info { 
+      text-align: center; 
+      font-size: 0.95rem; 
+      color: var(--color-text-sub); 
+      margin-bottom: 25px; 
+      font-weight: 500;
+    }
+    .mode-info span {
+      color: var(--primary-color);
+      transition: color 0.3s ease;
+    }
+
+    /* Segmented Controls */
+    .segmented-control { 
+      display: flex; 
+      background: #e5e5ea; 
+      padding: 4px; 
+      border-radius: 14px; 
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    .segment-btn { 
+      flex: 1; 
+      padding: 12px 5px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      text-align: center; 
+      font-weight: 600; 
+      color: var(--color-text-sub); 
+      font-size: 0.95rem; 
+      border: none; 
+      background: transparent; 
+      transition: all 0.25s cubic-bezier(0.17, 0.67, 0.46, 1.25); 
+      z-index: 2;
+    }
+    
+    .segment-btn.active { 
+      color: #fff; 
+      /* The active background will be applied via inline style for colors or a separate class */
+    }
+    
+    /* Specific mode active colors */
+    .segment-btn[data-mode="consume"].active { background: var(--color-consume); box-shadow: 0 4px 12px rgba(255,59,48,0.3); }
+    .segment-btn[data-mode="borrow"].active { background: var(--color-borrow); box-shadow: 0 4px 12px rgba(0,113,227,0.3); }
+    .segment-btn[data-mode="return"].active { background: var(--color-return); box-shadow: 0 4px 12px rgba(52,199,89,0.3); }
+
+    /* Identity toggle (Simple Segmented) */
+    .identity-toggle { 
+      display: flex; 
+      background: #e5e5ea; 
+      padding: 4px; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+    }
+    .toggle-item { 
+      flex: 1; 
+      padding: 10px; 
+      text-align: center; 
+      cursor: pointer; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      color: var(--color-text-sub); 
+      transition: 0.2s;
+      font-size: 0.9rem;
+    }
+    .toggle-item.active { 
+      background: var(--color-card); 
+      color: var(--color-text-main); 
+      box-shadow: var(--shadow-sm); 
+    }
+
+    hr { border: 0; height: 1px; background: #e5e5ea; margin: 25px 0; }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 18px; }
+    label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-weight: 600; 
+      color: var(--color-text-main); 
+      font-size: 0.9rem; 
+    }
+    
+    input[type="text"], input[type="number"], select { 
+      width: 100%; 
+      padding: 14px 16px; 
+      border: 1px solid var(--color-border); 
+      border-radius: var(--radius-md); 
+      box-sizing: border-box; 
+      font-size: 1rem; 
+      font-family: inherit;
+      background-color: #fafafa; 
+      transition: all 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--primary-color-light);
+      background-color: #fff;
+    }
+
+    /* Sub Navigation for Scanner */
+    .sub-nav {
+      display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .sub-nav-btn {
+      flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--color-border);
+      background: #fff; color: var(--color-text-sub); font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; transition: 0.2s;
+    }
+    .sub-nav-btn.active {
+      background: var(--color-text-main); color: #fff; border-color: var(--color-text-main);
+    }
+
+    .search-box { display: flex; gap: 10px; }
+    .btn-action { 
+      padding: 0 20px; 
+      background: var(--color-text-main); 
+      color: white; 
+      border: none; 
+      border-radius: var(--radius-md); 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: 0.2s;
+    }
+    .btn-action:active { transform: scale(0.96); }
+
+    /* Card Box */
+    .data-card {
+      margin-top: 25px; 
+      padding: 20px; 
+      border-radius: var(--radius-md); 
+      background: #f8f9fa; 
+      border: 1px solid #e9ecef;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card-header { 
+      display: flex; justify-content: space-between; align-items: flex-start; 
+      border-bottom: 1px solid #e9ecef; padding-bottom: 15px; margin-bottom: 15px;
+    }
+    .card-title { font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--color-text-main); }
+    .badge { 
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; 
+      background: #e5e5ea; color: var(--color-text-main); font-weight: 600;
+    }
+
+    /* Scanner View */
+    #reader { width: 100%; border-radius: var(--radius-md); overflow: hidden; background: #000; box-shadow: var(--shadow-sm); }
+    #scanStatus { text-align: center; font-size: 0.85rem; color: #ff9500; margin-top: 10px; font-weight: 600; }
+    .upload-btn {
+      width: 100%; padding: 14px; background: #fff; border: 1px dashed var(--color-border);
+      border-radius: var(--radius-md); color: var(--color-text-main); font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 15px; transition: 0.2s;
+    }
+    .upload-btn:hover { background: #f8f9fa; border-color: #a1a1aa; }
+
+    /* Signature */
+    #signature-pad { 
+      width: 100%; height: 180px; border: 1px solid var(--color-border); 
+      background: #fafafa; border-radius: var(--radius-md); cursor: crosshair; touch-action: none; 
+    }
+    .sig-tools { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px 0 4px; }
+    .clear-btn { 
+      background: #e5e5ea; border: none; padding: 6px 12px; 
+      border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: var(--color-text-main); cursor: pointer;
+    }
+
+    /* Main Submit Button */
+    #submitBtn { 
+      width: 100%; 
+      padding: 16px; 
+      border: none; 
+      border-radius: var(--radius-md); 
+      color: white; 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      cursor: pointer; 
+      background-color: var(--primary-color); 
+      margin-top: 30px; 
+      box-shadow: 0 4px 15px var(--primary-color-light);
+      transition: all 0.2s; 
+    }
+    #submitBtn:disabled { background-color: #d2d2d7; color: #fff; cursor: not-allowed; box-shadow: none; transform: none; }
+    #submitBtn:not(:disabled):active { transform: scale(0.98); }
+
+    .hidden { display: none !important; }
+
+    /* Grid for Forms */
+    .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-full { grid-column: span 2; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>路竹高中資訊物品管理</h1>
-  <div class="mode-info">目前模式：<span id="modeDisplay">借用</span></div>
+<div class="container" id="mainContainer">
+  <h1>資訊物品管理系統</h1>
+  <div class="mode-info">目前作業模式：<span id="modeDisplay">借用設備</span></div>
 
-  <div class="mode-group">
-    <button class="mode-btn" data-mode="consume" onclick="changeMode('consume', 'var(--primary-red)', '領用(消耗品)')">領用</button>
-    <button class="mode-btn active" data-mode="borrow" onclick="changeMode('borrow', 'var(--primary-blue)', '借用')">借用</button>
-    <button class="mode-btn" data-mode="return" onclick="changeMode('return', 'var(--primary-green)', '歸還')">歸還</button>
+  <div class="segmented-control">
+    <button class="segment-btn" data-mode="consume" onclick="changeMode('consume', 'var(--color-consume)', '領用(消耗品)')">領用耗材</button>
+    <button class="segment-btn active" data-mode="borrow" onclick="changeMode('borrow', 'var(--color-borrow)', '借用')">借用設備</button>
+    <button class="segment-btn" data-mode="return" onclick="changeMode('return', 'var(--color-return)', '歸還')">歸還設備</button>
   </div>
-
-  <hr style="border:0; border-top:1px solid #eee; margin: 20px 0;">
 
   <div class="form-group">
-    <label>物品資訊來源</label>
-    <div class="mode-group" style="background: #f1f3f5;">
-      <button class="mode-btn active" id="btn-camera" onclick="toggleSearchMethod('camera')">相機掃描</button>
-      <button class="mode-btn" id="btn-manual" onclick="toggleSearchMethod('manual')">手動輸入</button>
-      <button class="mode-btn" id="btn-add" onclick="toggleSearchMethod('add')">新增物品</button>
+    <label>如何尋找物品？</label>
+    <div class="sub-nav">
+      <button class="sub-nav-btn active" id="btn-camera" onclick="toggleSearchMethod('camera')">📷 相機掃描</button>
+      <button class="sub-nav-btn" id="btn-manual" onclick="toggleSearchMethod('manual')">⌨️ 手動輸入</button>
+      <button class="sub-nav-btn" id="btn-add" onclick="toggleSearchMethod('add')">➕ 新增物品</button>
     </div>
   </div>
 
+  <!-- Camera Section -->
   <div id="method-camera" class="search-method">
-    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; background: #eee; padding: 8px; border-radius: 8px;">
-        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer;">
-          <input type="radio" name="scanType" value="normal" checked onclick="restartScanner()"> 一般條碼
+    <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 12px;">
+        <label style="font-size: 0.9rem; font-weight: 500; cursor: pointer;">
+          <input type="radio" name="scanType" value="normal" checked onclick="restartScanner()"> 一般方型 QR/條碼
         </label>
-        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer;">
-          <input type="radio" name="scanType" value="long" onclick="restartScanner()"> 長條碼
+        <label style="font-size: 0.9rem; font-weight: 500; cursor: pointer;">
+          <input type="radio" name="scanType" value="long" onclick="restartScanner()"> 傳統長條碼
         </label>
     </div>
 
-    <div style="margin-bottom: 15px; text-align: center; border: 2px dashed #ccc; padding: 10px; border-radius: 8px;">
-        <input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(this)">
-        <button type="button" class="mode-btn" style="background:#f8f9fa; border:1px solid #ddd; color:#333; width:100%; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap:10px;" onclick="document.getElementById('photo-upload').click()">
-          <span>📷</span> 拍照/選取照片掃描
-        </button>
-        <div style="font-size: 0.8rem; color: #666; margin-top: 4px;">(若即時掃描失敗，請試用此功能)</div>
-    </div>
+    <input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoUpload(this)">
+    <button type="button" class="upload-btn" onclick="document.getElementById('photo-upload').click()">
+      <span style="font-size: 1.2rem;">🖼️</span> 拍照或選擇照片掃描
+    </button>
+    
     <div id="reader"></div>
-    <div id="scanStatus">等待掃描中...</div>
+    <div id="scanStatus">等待相機啟動中...</div>
   </div>
 
+  <!-- Manual Entry Section -->
   <div id="method-manual" class="search-method hidden">
     <div class="search-box">
-      <input type="text" id="barcode" placeholder="請掃描或輸入" onkeypress="if(event.keyCode==13) doSearch(this.value)">
-      <button class="btn-search" onclick="doSearch(document.getElementById('barcode').value)">搜尋</button>
+      <input type="text" id="barcode" placeholder="請輸入條碼編號..." onkeypress="if(event.keyCode==13) doSearch(this.value)">
+      <button class="btn-action" onclick="doSearch(document.getElementById('barcode').value)">搜尋</button>
     </div>
   </div>
 
+  <!-- Add Item Section -->
   <div id="method-add" class="search-method hidden">
-    <div class="add-section">
-      <div class="add-grid">
-        <div class="form-group"><label>條碼編號</label><input type="text" id="a_bc" placeholder="必填"></div>
+    <div class="data-card" style="margin-top: 0;">
+      <div class="grid-form">
+        <div class="form-group"><label>條碼編號 *</label><input type="text" id="a_bc" placeholder="掃描或輸入"></div>
         <div class="form-group"><label>財產編號</label><input type="text" id="a_pid"></div>
-        <div class="form-group full"><label>物品名稱</label><input type="text" id="a_name" placeholder="必填"></div>
+        <div class="form-group grid-full"><label>物品名稱 *</label><input type="text" id="a_name"></div>
         <div class="form-group"><label>廠牌</label><input type="text" id="a_brand"></div>
         <div class="form-group"><label>型號</label><input type="text" id="a_model"></div>
-        <div class="form-group full"><label>配件內容</label><input type="text" id="a_acc" placeholder="如：電源線、滑鼠..."></div>
+        <div class="form-group grid-full"><label>配件內容</label><input type="text" id="a_acc" placeholder="例：電源線、滑鼠"></div>
         <div class="form-group">
           <label>借領模式</label>
-          <select id="a_usage"><option value="領用">可領</option><option value="借用">可借</option></select>
+          <select id="a_usage"><option value="借用">可借用</option><option value="領用">可領用</option></select>
         </div>
         <div class="form-group">
           <label>類別</label>
-          <select id="a_cat"><option value="耗材">耗材</option><option value="資產">資產</option></select>
+          <select id="a_cat"><option value="資產">資產設備</option><option value="耗材">消耗品</option></select>
         </div>
         <div class="form-group"><label>總數量</label><input type="number" id="a_tqty" value="1"></div>
         <div class="form-group"><label>剩餘數量</label><input type="number" id="a_rqty" value="1"></div>
-        <div class="form-group full"><label>存放位置</label><input type="text" id="a_loc"></div>
-        <div class="form-group full">
-          <label>完好狀態</label>
+        <div class="form-group grid-full"><label>存放位置</label><input type="text" id="a_loc"></div>
+        <div class="form-group grid-full">
+          <label>目前狀態</label>
           <select id="a_stat"><option value="正常">正常</option><option value="完好">完好</option><option value="損壞">損壞</option></select>
         </div>
-        <div class="form-group full"><label>備註</label><input type="text" id="a_note"></div>
+        <div class="form-group grid-full"><label>備註</label><input type="text" id="a_note"></div>
       </div>
-      <button class="btn-save" onclick="doAddNewItem()">確認新增至資料庫</button>
+      <button class="btn-action" style="width: 100%; padding: 14px; margin-top: 10px; background: var(--color-return);" onclick="doAddNewItem()">儲存進入資料庫</button>
     </div>
   </div>
 
-  <div id="itemCard" class="hidden">
-    <div id="cardContent">
-      <div class="card-header"><h4 id="resName" style="margin:0">物品名稱</h4><span class="badge" id="resCat">類別</span></div>
-      <div id="resAction" style="padding-top:10px; border-top:1px dashed #ced4da; margin-top:10px;"></div>
+  <!-- Item Info Card -->
+  <div id="itemCard" class="data-card hidden">
+    <div class="card-header">
+      <div>
+        <h4 class="card-title" id="resName">--</h4>
+        <div style="font-size: 0.85rem; color: var(--color-text-sub); margin-top: 4px;" id="resAcc"></div>
+      </div>
+      <span class="badge" id="resCat">--</span>
+    </div>
+    <div id="resAction"></div>
+  </div>
+
+  <!-- User Identity Section -->
+  <div id="identityWrapper" class="hidden">
+    <hr>
+    <div class="form-group">
+      <label>使用身分</label>
+      <div class="identity-toggle">
+        <div class="toggle-item active" data-id="faculty" onclick="changeId('faculty')">教職員</div>
+        <div class="toggle-item" data-id="student" onclick="changeId('student')">學生</div>
+      </div>
+      <input type="hidden" id="identityValue" value="faculty">
+    </div>
+
+    <div id="facultyInput">
+      <div class="form-group"><label>姓名</label><input type="text" id="facultyName" placeholder="請輸入全名"></div>
+    </div>
+
+    <div id="studentInput" class="hidden">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label>學制</label>
+          <select id="sys" onchange="updateCls()"><option value="">選擇</option><option value="senior">高中</option><option value="junior">國中</option></select>
+        </div>
+        <div class="form-group"><label>班級</label><select id="cls"><option value="">請選學制</option></select></div>
+        <div class="form-group"><label>座號</label><select id="seat"></select></div>
+      </div>
+    </div>
+
+    <div id="signatureArea" style="margin-top:20px;">
+      <label>請在下方簽名</label>
+      <canvas id="signature-pad"></canvas>
+      <div class="sig-tools">
+        <small style="color:#a1a1aa">支援觸控板與手指</small>
+        <button class="clear-btn" type="button" onclick="clearSignature()">清除重簽</button>
+      </div>
     </div>
   </div>
 
-  <div class="form-group">
-    <label>使用身分</label>
-    <div class="identity-toggle">
-      <div class="toggle-item active" data-id="faculty" onclick="changeId('faculty')">教職員</div>
-      <div class="toggle-item" data-id="student" onclick="changeId('student')">學生</div>
-    </div>
-    <input type="hidden" id="identityValue" value="faculty">
-  </div>
-
-  <div id="facultyInput">
-    <div class="form-group"><label>姓名</label><input type="text" id="facultyName" placeholder="請輸入姓名"></div>
-  </div>
-
-  <div id="studentInput" class="hidden">
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-      <div class="form-group"><label>學制</label><select id="sys" onchange="updateCls()"><option value="">選擇</option><option value="senior">高中</option><option value="junior">國中</option></select></div>
-      <div class="form-group"><label>班級</label><select id="cls"><option value="">請選學制</option></select></div>
-      <div class="form-group"><label>座號</label><select id="seat"></select></div>
-    </div>
-  </div>
-
-  <div id="signatureArea" class="hidden" style="margin-top:20px;">
-    <label>簽名 (請用滑鼠或手指簽署)</label>
-    <canvas id="signature-pad"></canvas>
-    <div class="sig-tools">
-      <small style="color:#888">請在上方處簽名</small>
-      <button type="button" onclick="clearSignature()">清除</button>
-    </div>
-  </div>
-
-  <button id="submitBtn" onclick="doSubmit()" disabled>請先搜尋物品</button>
+  <button id="submitBtn" onclick="doSubmit()" disabled>請先搜尋/掃描物品</button>
 </div>
 
 <script>
@@ -175,14 +420,17 @@
   const API_URL = "https://script.google.com/macros/s/AKfycbx03QtyZZU34LnxCdD6pF1i-XFGfoddCs6fr9Q96NXt5Ko64euQJ1e0OrpxXfFcRJ8/exec"; 
   // ==========================================
 
-  let curMode = 'borrow';
+  let curMode = '借用'; // '借用', '領用(消耗品)', '歸還'
   let curItem = null;
   let html5QrCode = null;
   let canvas, ctx, drawing = false;
   let lastScan = "", scanMatchCount = 0;
   const NEED_MATCH = 3; 
 
-  window.onload = () => { initSeats(); startScanner(); };
+  window.onload = () => { 
+    initSeats(); 
+    startScanner(); 
+  };
 
   async function callApi(action, data = {}) {
     try {
@@ -201,10 +449,10 @@
     document.getElementById('facultyName').value = "";
     document.getElementById('barcode').value = "";
     document.getElementById('itemCard').classList.add('hidden');
-    document.getElementById('signatureArea').classList.add('hidden');
+    document.getElementById('identityWrapper').classList.add('hidden');
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.innerText = '請先搜尋物品';
+    btn.innerText = '請先搜尋/掃描物品';
     if (ctx) clearSignature();
     lastScan = ""; scanMatchCount = 0;
     document.getElementById('scanStatus').innerText = "等待掃描中...";
@@ -213,12 +461,25 @@
     }
   }
 
-  function changeMode(m, color, txt) {
-    curMode = m;
-    document.documentElement.style.setProperty('--primary-color', color);
+  function changeMode(m, colorHexVar, txt) {
+    // txt: '領用(消耗品)', '借用', '歸還'
+    curMode = txt;
     document.getElementById('modeDisplay').innerText = txt;
-    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-mode="${m}"]`).classList.add('active');
+    
+    // Theme colors update
+    const container = document.getElementById('mainContainer');
+    document.documentElement.style.setProperty('--primary-color', colorHexVar);
+    
+    // Light versions for focus rings and shadows
+    if(m === 'borrow') document.documentElement.style.setProperty('--primary-color-light', 'rgba(0, 113, 227, 0.15)');
+    if(m === 'consume') document.documentElement.style.setProperty('--primary-color-light', 'rgba(255, 59, 48, 0.15)');
+    if(m === 'return') document.documentElement.style.setProperty('--primary-color-light', 'rgba(52, 199, 89, 0.15)');
+
+    document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.segment-btn[data-mode="${m}"]`).classList.add('active');
+
+    // If an item is already loaded, refresh its action UI
+    if (curItem) buildItemActionUI();
   }
 
   function changeId(id) {
@@ -232,25 +493,34 @@
   function toggleSearchMethod(method) {
     document.querySelectorAll('.search-method').forEach(el => el.classList.add('hidden'));
     document.getElementById(`method-${method}`).classList.remove('hidden');
-    document.getElementById('btn-camera').classList.toggle('active', method === 'camera');
-    document.getElementById('btn-manual').classList.toggle('active', method === 'manual');
-    document.getElementById('btn-add').classList.toggle('active', method === 'add');
+    
+    document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${method}`).classList.add('active');
     
     if (method === 'camera') startScanner(); else stopScanner();
     
     document.getElementById('itemCard').classList.add('hidden');
-    document.getElementById('signatureArea').classList.add('hidden');
-    document.getElementById('submitBtn').classList.toggle('hidden', method === 'add');
+    document.getElementById('identityWrapper').classList.add('hidden');
+    
+    const sBtn = document.getElementById('submitBtn');
+    if(method === 'add') {
+      sBtn.classList.add('hidden');
+    } else {
+      sBtn.classList.remove('hidden');
+      sBtn.disabled = true;
+      sBtn.innerText = '請先搜尋/掃描物品';
+    }
   }
 
+  /* Scanner Logic */
   function startScanner() {
     if (html5QrCode && html5QrCode.isScanning) return;
     if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
     const scanType = document.querySelector('input[name="scanType"]:checked').value;
-    let qrBoxConfig = (scanType === 'long') ? { width: 320, height: 100 } : { width: 250, height: 150 };
+    let qrBoxConfig = (scanType === 'long') ? { width: 320, height: 100 } : { width: 250, height: 250 };
 
-    const config = { fps: 10, qrbox: qrBoxConfig, aspectRatio: 1.0 };
+    const config = { fps: 15, qrbox: qrBoxConfig, aspectRatio: 1.0 };
 
     html5QrCode.start(
       { facingMode: "environment" }, 
@@ -262,12 +532,14 @@
         if (scanMatchCount >= NEED_MATCH) {
           if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
           stopScanner();
-          document.getElementById('scanStatus').innerText = "驗證成功！";
+          document.getElementById('scanStatus').innerText = "✅ 驗證成功！";
           document.getElementById('barcode').value = text;
           doSearch(text);
         }
       }
-    ).catch(err => console.error(err));
+    ).catch(err => {
+      document.getElementById('scanStatus').innerText = "自動掃描啟動失敗，請允許相機權限或使用照片上傳。";
+    });
   }
 
   function stopScanner() {
@@ -288,130 +560,190 @@
     if (inputElement.files.length === 0) return;
     const file = inputElement.files[0];
   
-    stopScanner(); // 停止視訊流以釋放效能給圖片解碼
+    stopScanner(); 
   
     document.getElementById('scanStatus').innerText = "圖片解碼中...";
-    Swal.fire({ 
-        title: '正在辨識條碼...', 
-        text: '請確保條碼清晰、無反光',
-        allowOutsideClick: false, 
-        didOpen: () => { Swal.showLoading(); } 
-    });
+    Swal.fire({ title: '正在辨識', text: '請稍候', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
   
     const photoScanner = new Html5Qrcode("reader");
-    
-    // 使用更強力的解碼模式 (true 表示開啟所有解碼引擎)
     photoScanner.scanFileV2(file, true)
-    .then(result => { // 改名為 result 比較不容易混淆
+    .then(result => { 
       Swal.close();
-      // 必須讀取 result 物件裡面的 .decodedText 屬性
       const barcodeValue = result.decodedText; 
-      
       document.getElementById('barcode').value = barcodeValue;
-      document.getElementById('scanStatus').innerText = "辨識成功：" + barcodeValue;
-      setTimeout(() => {
-          doSearch(barcodeValue);
-        }, 500);
-    // 執行搜尋
-    doSearch(barcodeValue);
-  })
+      document.getElementById('scanStatus').innerText = "✅ 辨識成功：" + barcodeValue;
+      setTimeout(() => { doSearch(barcodeValue); }, 300);
+    })
     .catch(err => {
       Swal.close();
-      document.getElementById('scanStatus').innerText = "辨識失敗";
+      document.getElementById('scanStatus').innerText = "❌ 辨識失敗";
       Swal.fire({
           icon: 'warning',
-          title: '無法識別條碼',
-          html: `建議拍攝技巧：<br>
-                 1. <b>橫向拍攝</b>：讓條碼填滿畫面長邊<br>
-                 2. <b>避免反光</b>：側一點拍，別讓燈光直射標籤<br>
-                 3. <b>手動對焦</b>：拍照前先點一下螢幕條碼處`,
-          confirmButtonText: '再試一次'
+          title: '無法識別',
+          text: '請拍攝更清晰的條碼或使用手動輸入',
+          confirmButtonText: '確定'
       });
     })
-    .finally(() => {
-       inputElement.value = ''; 
-       photoScanner.clear();
-    });
-}
+    .finally(() => { inputElement.value = ''; photoScanner.clear(); });
+  }
 
+  /* Search and UI building */
   function doSearch(val) {
     if (!val) return;
-    val = val.toString().trim(); // 建議加入：確保條碼前後沒有空白或換行符號
-    Swal.fire({ title: '查詢中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    val = val.toString().trim();
+    Swal.fire({ title: '查詢雲端資料中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
     callApi('search', { barcode: val }).then(item => {
       Swal.close();
       if (item && item.found) {
         curItem = item;
         document.getElementById('itemCard').classList.remove('hidden');
-        document.getElementById('resName').innerText = item.name;
-        document.getElementById('resCat').innerText = item.category;
-        let acc = item.accessories ? `<div style="color:#e67e22; font-size:0.9rem;">配件：${item.accessories}</div>` : "";
-        let html = acc + (item.category === "耗材" ? 
-          `庫存: <b>${item.stock}</b><br><label style="margin-top:10px">數量</label><input type="number" id="qty" value="1" min="1">` :
-          `目前狀態: <b>${item.status}</b><br><label style="margin-top:10px">變更為</label><select id="status"><option value="正常">正常</option><option value="完好">完好</option><option value="損壞">損壞</option></select>`);
-        document.getElementById('resAction').innerHTML = html;
-        document.getElementById('signatureArea').classList.remove('hidden');
-        setTimeout(initSignaturePad, 100); 
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').innerText = '確認送出交易';
+        document.getElementById('resName').innerText = item.name || "未命名物品";
+        document.getElementById('resCat').innerText = item.category || "無分類";
+        document.getElementById('resAcc').innerText = item.accessories ? `配件包含: ${item.accessories}` : "無特別配件";
+        
+        buildItemActionUI();
+
+        document.getElementById('identityWrapper').classList.remove('hidden');
+        setTimeout(initSignaturePad, 300); // Wait for block layout to render
+        
+        const sBtn = document.getElementById('submitBtn');
+        sBtn.disabled = false;
+        sBtn.innerText = '✅ 確認送出紀錄';
       } else {
         stopScanner();
         Swal.fire({
-          icon: 'question', title: '找不到資料', text: `條碼「${val}」不存在。`, showCancelButton: true, confirmButtonText: '前往新增'
-        }).then(res => { if (res.isConfirmed) { toggleSearchMethod('add'); document.getElementById('a_bc').value = val; } });
+          icon: 'question', title: '查無此物', text: `條碼「${val}」不存在資料庫中`, showCancelButton: true, confirmButtonText: '立即新增'
+        }).then(res => { 
+          if (res.isConfirmed) { toggleSearchMethod('add'); document.getElementById('a_bc').value = val; } 
+        });
       }
-    }).catch(err => Swal.fire({
-        icon: 'error',
-        title: 'iPad 連線失敗',
-        text: '原因: ' + (err.message || err.toString()) + '。請確認網路或重新整理。'
-      }));
+    }).catch(err => Swal.fire('連線錯誤', err.toString(), 'error'));
   }
 
+  function buildItemActionUI() {
+    const actArea = document.getElementById('resAction');
+    let html = "";
+    
+    if(curMode.includes('領用') || curMode.includes('借用')) {
+      // Show stock info and qty input
+      const stockText = curItem.stock !== "" && curItem.stock !== undefined ? parseInt(curItem.stock) : "無限制";
+      html += `<div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px;">
+        <div style="font-size:0.9rem; margin-bottom:10px;">庫存剩餘: <b>${stockText}</b></div>
+        <label>需求數量</label>
+        <input type="number" id="qty" value="1" min="1" max="${typeof stockText === 'number' ? stockText : 999}">
+      </div>`;
+    } else if (curMode.includes('歸還')) {
+      // Show qty to return and status update
+      html += `<div style="background:rgba(0,0,0,0.03); padding:10px; border-radius:8px;">
+        <label style="margin-bottom:8px;">歸還數量</label>
+        <input type="number" id="qty" value="1" min="1" style="margin-bottom:15px;">
+        <label style="margin-bottom:8px;">歸還時物況判定</label>
+        <select id="status">
+          <option value="正常" ${curItem.status==='正常'?'selected':''}>正常</option>
+          <option value="完好" ${curItem.status==='完好'?'selected':''}>完好</option>
+          <option value="損壞">損壞</option>
+        </select>
+      </div>`;
+    }
+    actArea.innerHTML = html;
+  }
+
+  /* Signature canvas */
   function initSignaturePad() {
     canvas = document.getElementById('signature-pad');
+    if(!canvas) return;
     ctx = canvas.getContext('2d');
+    
+    // Fix DPI scaling for blurry canvas
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     canvas.width = canvas.offsetWidth * ratio;
     canvas.height = canvas.offsetHeight * ratio;
     ctx.scale(ratio, ratio);
-    ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    
+    ctx.strokeStyle = "#000"; 
+    ctx.lineWidth = 3; 
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
     const getPos = (e) => {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return { x: clientX - rect.left, y: clientY - rect.top };
     };
+    
     const start = (e) => { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); if (e.touches) e.preventDefault(); };
     const move = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if (e.touches) e.preventDefault(); };
     const stop = () => { drawing = false; };
+    
     canvas.addEventListener('touchstart', start, {passive: false});
     canvas.addEventListener('touchmove', move, {passive: false});
     canvas.addEventListener('touchend', stop);
     canvas.addEventListener('mousedown', start);
     canvas.addEventListener('mousemove', move);
     window.addEventListener('mouseup', stop);
+    window.addEventListener('mouseout', stop);
+
+    // Initial clear to set background white (so toDataURL works nicely)
+    clearSignature();
   }
 
-  function clearSignature() { if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  function clearSignature() { 
+    if (!ctx) return;
+    ctx.fillStyle = "#fafafa"; // Match background
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
+  function isCanvasBlank(canvasObj) {
+    const blank = document.createElement('canvas');
+    blank.width = canvasObj.width;
+    blank.height = canvasObj.height;
+    const blankCtx = blank.getContext('2d');
+    blankCtx.fillStyle = "#fafafa";
+    blankCtx.fillRect(0, 0, blank.width, blank.height);
+    return canvasObj.toDataURL() === blank.toDataURL();
+  }
+
+  /* Core API calls */
   function doSubmit() {
     const idMode = document.getElementById('identityValue').value;
-    let user = (idMode === 'faculty') ? document.getElementById('facultyName').value.trim() : `${document.getElementById('cls').value}-${document.getElementById('seat').value}`;
-    if (!user || user.includes('undefined') || user === "-") return Swal.fire('不完整', '請輸入姓名或班座', 'warning');
+    let user = (idMode === 'faculty') 
+      ? document.getElementById('facultyName').value.trim() 
+      : `${document.getElementById('cls').value}-${document.getElementById('seat').value}`;
+    
+    if (!user || user.includes('undefined') || user === "-" || user.trim() === "") {
+      return Swal.fire('資料不完整', '請輸入教職員姓名或選擇班級座號', 'warning');
+    }
+    
+    if (isCanvasBlank(canvas)) {
+      return Swal.fire('缺少簽名', '請在簽名板上簽署', 'warning');
+    }
+
     const sigData = canvas.toDataURL("image/png");
-    if (sigData.length < 2000) return Swal.fire('缺少簽名', '請先簽名', 'warning');
-    Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    Swal.fire({ title: '資料傳輸中...', html: '請稍候，正在寫入雲端紀錄', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
     const p = {
-      mode: document.getElementById('modeDisplay').innerText,
-      barcode: curItem.barcode, propId: curItem.propId, category: curItem.category, itemRow: curItem.row,
-      identity: idMode === 'faculty' ? '教職員' : '學生', userName: user, signatureData: sigData,
+      mode: curMode,
+      barcode: curItem.barcode, 
+      propId: curItem.propId, 
+      category: curItem.category, 
+      name: curItem.name,
+      itemRow: curItem.row,
+      identity: idMode === 'faculty' ? '教職員' : '學生', 
+      userName: user, 
+      signatureData: sigData,
       qty: document.getElementById('qty') ? parseInt(document.getElementById('qty').value) : 1,
-      itemStatus: document.getElementById('status') ? document.getElementById('status').value : '正常'
+      itemStatus: document.getElementById('status') ? document.getElementById('status').value : curItem.status
     };
+
     callApi('submit', p).then(r => {
-      if (r.success) Swal.fire({ icon: 'success', title: '完成', timer: 1000, showConfirmButton: false }).then(() => resetUI());
-      else Swal.fire('失敗', r.error, 'error');
-    }).catch(err => Swal.fire('錯誤', '連線失敗', 'error'));
+      if (r.success) {
+        Swal.fire({ icon: 'success', title: '手續完成！', text:'已經寫入資料庫', timer: 1500, showConfirmButton: false }).then(() => resetUI());
+      } else {
+        Swal.fire('寫入失敗', r.error, 'error');
+      }
+    }).catch(err => Swal.fire('網路錯誤', '無法連接到伺服器', 'error'));
   }
 
   function doAddNewItem() {
@@ -430,14 +762,23 @@
       status: document.getElementById('a_stat').value,
       notes: document.getElementById('a_note').value
     };
-    if (!p.barcode || !p.name) return Swal.fire('缺少資料', '條碼與名稱為必填', 'warning');
+    
+    if (!p.barcode || !p.name) return Swal.fire('資料不完整', '條碼與名稱為必填項目', 'warning');
+    
     Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
     callApi('add', p).then(r => {
-      if (r.success) { Swal.fire('成功', '新增完成', 'success'); resetUI(); }
-      else Swal.fire('失敗', r.error, 'error');
-    });
+      if (r.success) { 
+        Swal.fire('成功', '物品已經新增至資料庫', 'success'); 
+        resetUI(); 
+        toggleSearchMethod('camera');
+      } else { 
+        Swal.fire('失敗', r.error, 'error'); 
+      }
+    }).catch(err => Swal.fire('錯誤', '連線失敗', 'error'));
   }
 
+  /* Utility functions */
   function updateCls() {
     const s = document.getElementById('sys').value, c = document.getElementById('cls');
     c.innerHTML = '<option value="">請選擇</option>';
