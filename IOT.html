@@ -806,14 +806,17 @@
   });
 
   // ── QR Modal ──
-  const qrBackdrop  = document.getElementById('qrBackdrop');
-  const qrUnitCodeEl = document.getElementById('qrUnitCode');
-  const qrUnitNameEl = document.getElementById('qrUnitName');
-  const qrUrlEl      = document.getElementById('qrUrl');
+  let qrBackdrop, qrUnitCodeEl, qrUnitNameEl, qrUrlEl;
 
-  document.getElementById('qrCloseBtn').addEventListener('click', closeQrModal);
-  qrBackdrop.addEventListener('click', e => { if (e.target === qrBackdrop) closeQrModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQrModal(); });
+  document.addEventListener('DOMContentLoaded', () => {
+    qrBackdrop   = document.getElementById('qrBackdrop');
+    qrUnitCodeEl = document.getElementById('qrUnitCode');
+    qrUnitNameEl = document.getElementById('qrUnitName');
+    qrUrlEl      = document.getElementById('qrUrl');
+
+    document.getElementById('qrCloseBtn').addEventListener('click', closeQrModal);
+    qrBackdrop.addEventListener('click', e => { if (e.target === qrBackdrop) closeQrModal(); });
+  });
 
   function closeQrModal() { qrBackdrop.classList.remove('open'); }
 
