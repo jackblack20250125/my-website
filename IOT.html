@@ -640,9 +640,15 @@
     grid.innerHTML = '';
 
     const units = rows
-      .map(r => (r['處室單位'] || '').trim())
+      .map(r => {
+        const u = (r['處室單位'] || '').trim();
+        if (!u) return null;
+        const p = parseUnit(u);
+        p._raw = u;
+        p.confirmed = String(r['檢視狀態']).toUpperCase() === 'TRUE';
+        return p;
+      })
       .filter(Boolean)
-      .map(u => { const p = parseUnit(u); p._raw = u; return p; })
       // 依前三碼（code）由小到大排序，無code者排最後
       .sort((a, b) => {
         if (!a.code && !b.code) return 0;
@@ -653,17 +659,17 @@
 
     document.getElementById('unitCount').textContent = `共 ${units.length} 個單位`;
 
-    units.forEach(({ code, name, _raw }, i) => {
+    units.forEach(({ code, name, _raw, confirmed }, i) => {
       const card = document.createElement('div');
-      card.className = 'unit-card';
-      card.dataset.unitRaw = units[i]._raw || '';
+      card.className = 'unit-card' + (confirmed ? ' confirmed' : '');
+      card.dataset.unitRaw = _raw || '';
       card.dataset.code = code;
       card.innerHTML = `
         <span class="unit-card-index">${String(i + 1).padStart(2, '0')}</span>
         <div class="unit-code">${code || '—'}</div>
         <div class="unit-name">${name}</div>
-        <div class="unit-status"><span class="dot"></span> 點擊查看資料</div>`;
-      card.addEventListener('click', () => openModal({ code, name, raw: card.dataset.unitRaw }));
+        <div class="unit-status"><span class="dot"></span> ${confirmed ? '已確認簽名' : '點擊查看資料'}</div>`;
+      card.addEventListener('click', () => openModal({ code, name, raw: _raw }));
       grid.appendChild(card);
     });
   }
@@ -680,7 +686,6 @@
       gKi    = kiRaw    || '1';
       renderHero(gNendo, gKi);
       renderUnits(rows);
-      loadConfirmed(gNendo, gKi);
     } catch(err) {
       document.getElementById('heroTitle').innerHTML =
         `路竹高中 IoT 設備盤點`;
@@ -840,22 +845,9 @@
     qrBackdrop.classList.add('open');
   }
 
-  // ── 載入已確認清單並標色 ──
-  async function loadConfirmed(nendo, ki) {
-    try {
-      const res  = await fetch(`${API_URL}?action=readConfirmed&nendo=${encodeURIComponent(nendo)}&ki=${encodeURIComponent(ki)}`);
-      const json = await res.json();
-      if (json.status !== 'success') return;
-      const codes = new Set(json.data.map(r => (r['處室代碼'] || '').trim()));
-      document.querySelectorAll('.unit-card').forEach(card => {
-        if (codes.has(card.dataset.code)) {
-          card.classList.add('confirmed');
-          const st = card.querySelector('.unit-status');
-          if (st) st.innerHTML = '<span class="dot"></span> 已確認簽名';
-        }
-      });
-    } catch(e) { /* silent */ }
-  }
+  // ── 已確認清單個別更新（頁面完整載入後即由 renderUnits 直接顯示，
+  //    本函斸僅保留供不區制刷內容使用）
+  async function loadConfirmed(nendo, ki) { /* 由設定工作簿 檢視狀態 欄控制，不需要。 */ }
 </script>
 
 <!-- ══ QR MODAL ══ -->
