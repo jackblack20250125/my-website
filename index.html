@@ -16,6 +16,7 @@
             --grad-manage: linear-gradient(135deg, #7bed9f, #2ed573);
             --grad-learn: linear-gradient(135deg, #ffeaa7, #ffa502);
             --grad-header: linear-gradient(120deg, #3742fa, #0984e3);
+            --grad-tablet: linear-gradient(135deg, #a29bfe, #6c5ce7);
         }
 
         body {
@@ -55,6 +56,7 @@
         .border-repair { border-color: #ff4757; }
         .border-manage { border-color: #2ed573; }
         .border-learn  { border-color: #ffa502; }
+        .border-tablet { border-color: #6c5ce7; }
 
         /* 圖示容器 */
         .icon-circle {
@@ -93,6 +95,7 @@
         .bg-repair { background: var(--grad-repair); }
         .bg-manage { background: var(--grad-manage); }
         .bg-learn  { background: var(--grad-learn); }
+        .bg-tablet { background: var(--grad-tablet); }
         .bg-gray   { background: #dfe6e9; color: #636e72; }
         
         /* 進場動畫 (Slide Up) */
@@ -165,6 +168,21 @@
                         <h3 class="h4 fw-bold mb-2">居家學習載具</h3>
                         <p class="text-muted mb-4 small">平板電腦與學習設備借用歸還管理。</p>
                         <a href="#" class="btn btn-gradient bg-learn w-100 rounded-pill shadow-sm">進入系統</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4 animate-up delay-4">
+                <div class="card h-100 custom-card hover-lift border-tablet shadow-sm" onclick="window.open('https://jackblack20250125.github.io/my-website/tablet_device.html', '_blank')" role="button">
+                    <div class="card-body p-4 text-center">
+                        <span class="badge rounded-pill bg-success position-absolute top-0 end-0 m-3 shadow-sm">運行中</span>
+                        
+                        <div class="icon-circle bg-tablet shadow-sm">
+                            <svg viewBox="0 0 448 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64H64zM224 400a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg> 
+                        </div>
+                        <h3 class="h4 fw-bold mb-2">學校平板管理系統</h3>
+                        <p class="text-muted mb-4 small">校內平板電腦之借用、歸還與盤點管理。</p>
+                        <a href="#" class="btn btn-gradient bg-tablet w-100 rounded-pill shadow-sm">進入系統</a>
                     </div>
                 </div>
             </div>
