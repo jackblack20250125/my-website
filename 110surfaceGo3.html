@@ -5,139 +5,231 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>路竹高中居家載具借用系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
   <style>
-    body { background-color: #f8f9fa; padding-bottom: 100px; font-family: -apple-system, "Noto Sans TC", sans-serif; }
-    .container { max-width: 900px; }
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --secondary: #10B981;
+      --danger: #EF4444;
+      --bg: #F3F4F6;
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.5);
+    }
+    body { 
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+      padding-bottom: 120px; 
+      font-family: 'Inter', 'Noto Sans TC', sans-serif; 
+      min-height: 100vh;
+      color: #1F2937;
+    }
+    
+    /* 玻璃擬態背景裝飾 */
+    .bg-shape1 { position: fixed; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: -1; }
+    .bg-shape2 { position: fixed; bottom: -150px; left: -150px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: -1; }
+
+    .container { max-width: 960px; position: relative; z-index: 10; padding-top: 45px; }
 
     /* --- 頂部排版 --- */
-    .header-section {
-      display: flex; flex-direction: column; align-items: center;      
-      padding-top: 25px; margin-bottom: 30px;      
-    }
-    h2 { font-weight: 800; color: #2c3e50; margin: 0 0 5px 0; letter-spacing: -0.5px; }
-    .sub-title { color: #6c757d; margin-bottom: 15px; font-size: 0.95rem; }
+    .header-section { text-align: center; margin-bottom: 40px; animation: fadeInDown 0.8s ease; }
+    h2 { font-weight: 800; color: #111827; margin-bottom: 8px; letter-spacing: -1px; font-size: 2.3rem; }
+    .sub-title { color: #6B7280; font-size: 1.05rem; }
 
     /* --- 重新整理按鈕 --- */
     .btn-refresh {
-      padding: 8px 20px; font-size: 15px; font-weight: 600;
-      cursor: pointer; background-color: #fff; color: #0d6efd;
-      border: 1px solid #dee2e6; border-radius: 50px;
-      display: flex; align-items: center; gap: 8px;
-      transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border); color: var(--primary);
+      padding: 10px 24px; font-size: 15px; font-weight: 600;
+      border-radius: 50px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-top: 15px;
     }
-    .btn-refresh:hover { background-color: #f1f3f5; transform: translateY(-1px); }
-    .btn-refresh:active { transform: scale(0.98); }
-    .spin { animation: rotate 0.8s linear infinite; }
+    .btn-refresh:hover { transform: translateY(-2px); box-shadow: 0 10px 15px rgba(0,0,0,0.08); background: #fff; }
+    .btn-refresh:active { transform: scale(0.96); }
+    .spin { animation: rotate 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     /* --- 設備卡片 --- */
     .device-card {
-      height: 120px; border-radius: 16px; cursor: pointer; border: 2px solid transparent;
+      height: 140px; border-radius: 20px; cursor: pointer; 
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
-      transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+      background: var(--card-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03); 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative; overflow: hidden;
     }
-    .device-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+    .col-animate { animation: fadeInUp 0.5s ease backwards; }
+    .device-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; transition: 0.3s;
+    }
     
-    .status-available { background: linear-gradient(145deg, #ffffff, #f0fff4); border-color: #d1e7dd; color: #198754; }
-    .status-inuse { background: linear-gradient(145deg, #ffffff, #fff5f5); border-color: #f8d7da; color: #dc3545; }
-    .status-other { background: #f8f9fa; border-color: #e9ecef; color: #6c757d; }
+    .status-available::before { background: var(--secondary); }
+    .status-available { color: #065F46; }
+    .status-available .device-info { background: #D1FAE5; color: #065F46; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+    .status-inuse::before { background: var(--danger); }
+    .status-inuse { color: #991B1B; }
+    .status-inuse .device-info { background: #FEE2E2; color: #991B1B; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+
+    .status-other::before { background: #9CA3AF; }
+    .status-other { color: #4B5563; opacity: 0.7; pointer-events: none; filter: grayscale(100%); }
+    .status-other .device-info { background: #F3F4F6; color: #4B5563; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
     
+    .device-card:hover:not(.status-other) { 
+      transform: translateY(-5px); 
+      box-shadow: 0 15px 30px rgba(0,0,0,0.08); 
+    }
     .selected { 
-      border-color: #0d6efd !important; background: #e7f1ff !important;
-      transform: translateY(-3px); box-shadow: 0 8px 20px rgba(13, 110, 253, 0.2); 
+      border: 2px solid var(--primary) !important; 
+      background: #EEF2FF !important;
+      transform: translateY(-5px); 
+      box-shadow: 0 15px 30px rgba(79, 70, 229, 0.2) !important; 
     }
+    .selected::before { background: var(--primary); }
     
-    .device-id { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
-    .device-info { font-size: 1rem; font-weight: 600; opacity: 0.9; margin-top: 4px; max-width: 90%; text-align: center; }
+    .device-id { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 8px; letter-spacing: 0.5px; }
 
-    /* --- 骨架屏 Skeleton Loader (Bootstrap Placeholder) --- */
+    /* --- 骨架屏 --- */
     .skeleton-card {
-      height: 120px; border-radius: 16px; background: #fff; border: 1px solid #eee;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      padding: 15px; box-shadow: none; cursor: wait;
+      height: 140px; border-radius: 20px; background: rgba(255,255,255,0.6); 
+      border: 1px dashed rgba(0,0,0,0.1); display: flex; flex-direction: column; 
+      justify-content: center; align-items: center; padding: 15px; cursor: wait;
     }
-    .skeleton-text { border-radius: 4px; }
+    .skeleton-text { border-radius: 8px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    /* --- 底部與彈窗 --- */
-    .role-switch { background: #f1f3f5; border-radius: 12px; padding: 4px; display: flex; margin-bottom: 20px; }
-    .role-btn { flex: 1; border: none; padding: 8px; border-radius: 10px; font-weight: bold; color: #666; background: transparent; transition: 0.3s; }
-    .role-btn.active { background: #fff; color: #0d6efd; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+    /* --- 底部懸浮列 --- */
+    .bottom-bar { 
+      position: fixed; bottom: 0; left: 0; right: 0; 
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 20px; border-top: 1px solid rgba(255,255,255,0.5); 
+      z-index: 1050; box-shadow: 0 -10px 30px rgba(0,0,0,0.06); 
+      transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .bottom-bar.show { transform: translateY(0); }
     
-    #signature-pad-container { border: 2px dashed #ced4da; background: #fdfdfe; height: 180px; border-radius: 12px; overflow: hidden; }
+    .btn-action {
+      background: linear-gradient(135deg, var(--primary), #6366F1); color: white;
+      border: none; padding: 12px 30px; font-weight: 800; font-size: 1.15rem;
+      border-radius: 50px; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+      transition: all 0.3s;
+    }
+    .btn-action:hover { box-shadow: 0 12px 25px rgba(79, 70, 229, 0.4); transform: translateY(-2px); color: white; }
+
+    /* --- 彈出視窗 --- */
+    .modal-content { border-radius: 24px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+    .modal-header { border-bottom: none; padding: 24px 24px 10px; }
+    .modal-title { font-weight: 800; color: #111827; }
+    .modal-body { padding: 0 24px 24px; }
+    .modal-footer { border-top: 1px solid #F3F4F6; padding: 20px 24px; }
+
+    .role-switch { background: #F3F4F6; border-radius: 14px; padding: 6px; display: flex; margin-bottom: 24px; }
+    .role-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: #6B7280; background: transparent; transition: all 0.3s; }
+    .role-btn.active { background: #fff; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    
+    .form-label { font-size: 0.9rem; font-weight: 700; color: #4B5563; margin-bottom: 8px; }
+    .form-control, .form-select { border-radius: 14px; border: 2px solid transparent; padding: 14px 18px; background: #F3F4F6; transition: 0.3s; font-weight: 500; font-size: 1rem; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); outline: none; }
+
+    #signature-pad-container { border: 2px dashed #D1D5DB; background: #fff; height: 220px; border-radius: 16px; overflow: hidden; position: relative; transition: 0.3s; }
+    #signature-pad-container:hover { border-color: var(--primary); }
     canvas { width: 100%; height: 100%; touch-action: none; }
-    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 15px; border-top: 1px solid #e9ecef; display: none; z-index: 1050; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); }
+    .clear-btn { position: absolute; top: 12px; right: 12px; background: rgba(243, 244, 246, 0.9); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #4B5563; z-index: 10; backdrop-filter: blur(4px); transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .clear-btn:hover { background: #E5E7EB; color: #111827; }
+
+    .custom-switch { display: flex; justify-content: space-between; align-items: center; background: #F9FAFB; padding: 16px; border-radius: 14px; border: 1px solid #E5E7EB; }
+    .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+    
+    .sync-status { display: inline-flex; align-items: center; font-size: 0.85rem; color: #6B7280; gap: 6px; margin-top: 10px; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); display: inline-block; }
+    .syncing .sync-dot { background: #F59E0B; animation: pulse 1s infinite alternate; }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
   </style>
 </head>
 <body>
+
+<div class="bg-shape1"></div>
+<div class="bg-shape2"></div>
 
 <div class="container">
   <div class="header-section">
     <h2>路竹高中居家載具借用</h2>
     <p class="sub-title">請點選載具進行批量借用或歸還</p>
     
-    <button id="refresh-btn" class="btn-refresh" onclick="handleRefreshClick()">
-      <span id="btn-icon">🔄</span>
-      <span id="btn-text">重新整理列表</span>
-    </button>
+    <div>
+      <button id="refresh-btn" class="btn-refresh" onclick="handleRefreshClick()">
+        <i id="btn-icon" class="bi bi-arrow-clockwise"></i>
+        <span id="btn-text">重新同步</span>
+      </button>
+    </div>
+    <div id="sync-status" class="sync-status" style="display: none;">
+      <span class="sync-dot"></span> <span id="sync-text">已更新至最新狀態</span>
+    </div>
   </div>
   
-  <div id="grid-container" class="row g-3">
-    </div>
+  <div id="grid-container" class="row g-4">
+    <!-- Cards will go here -->
+  </div>
 </div>
 
 <div class="bottom-bar" id="bottomBar">
-  <div class="d-flex justify-content-between align-items-center container">
-    <span class="fs-5 fw-bold text-dark">已選 <span id="selectedCount" class="text-primary">0</span> 台</span>
-    <button class="btn btn-primary btn-lg px-4 rounded-pill fw-bold shadow-sm" onclick="openBatchModal()">下一步：填寫資料</button>
+  <div class="d-flex justify-content-between align-items-center container py-0">
+    <span class="fs-4 fw-bold text-dark">已選取 <span id="selectedCount" style="color: var(--primary);">0</span> 台</span>
+    <button class="btn-action" onclick="openBatchModal()">
+      下一步：填寫資料 <i class="bi bi-arrow-right fw-bold ms-1"></i>
+    </button>
   </div>
 </div>
 
 <div class="modal fade" id="actionModal" data-bs-backdrop="static" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold fs-4"><span id="modalActionTitle">批量處理</span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-content">
+      <div class="modal-header d-flex justify-content-between">
+        <h5 class="modal-title fs-4"><span id="modalActionTitle">批量處理</span></h5>
+        <button type="button" class="btn-close fs-5" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body pt-4">
+      <div class="modal-body pt-3">
         
         <div class="role-switch" id="roleToggleArea">
-          <button class="role-btn active" id="btnFaculty" onclick="setRole('Faculty')">👨‍🏫 教職員</button>
-          <button class="role-btn" id="btnStudent" onclick="setRole('Student')">👨‍🎓 學生</button>
+          <button class="role-btn active" id="btnFaculty" onclick="setRole('Faculty')"><i class="bi bi-person-workspace me-1"></i> 教職員</button>
+          <button class="role-btn" id="btnStudent" onclick="setRole('Student')"><i class="bi bi-mortarboard-fill me-1"></i> 學生</button>
         </div>
         
-        <div id="facultyInputArea" class="mb-3">
-          <label class="form-label fw-bold text-secondary small" id="nameLabel">教職員姓名</label>
-          <input type="text" id="facultyName" class="form-control form-control-lg bg-light" placeholder="請輸入姓名">
+        <div id="facultyInputArea" class="mb-4">
+          <label class="form-label" id="nameLabel">教職員姓名</label>
+          <input type="text" id="facultyName" class="form-control" placeholder="請輸入您的姓名">
         </div>
 
-        <div id="studentInputArea" class="mb-3" style="display:none;">
-          <div class="row g-2">
+        <div id="studentInputArea" class="mb-4" style="display:none;">
+          <div class="row g-3">
             <div class="col-6">
-              <label class="form-label fw-bold text-secondary small">學制</label>
-              <select id="selSystem" class="form-select form-select-lg bg-light" onchange="updateClassList()">
+              <label class="form-label">學制</label>
+              <select id="selSystem" class="form-select" onchange="updateClassList()">
                 <option value="高中部">高中部</option>
                 <option value="國中部">國中部</option>
               </select>
             </div>
             <div class="col-6">
-              <label class="form-label fw-bold text-secondary small">班級</label>
-              <select id="selClass" class="form-select form-select-lg bg-light"></select>
+              <label class="form-label">班級</label>
+              <select id="selClass" class="form-select"></select>
             </div>
           </div>
           <div class="mt-3">
-            <label class="form-label fw-bold text-secondary small">座號</label>
-            <select id="selSeat" class="form-select form-select-lg bg-light"></select>
+            <label class="form-label">座號</label>
+            <select id="selSeat" class="form-select"></select>
           </div>
         </div>
         
-        <div class="mb-3" id="reasonArea">
-          <label class="form-label fw-bold text-secondary small">借用原因</label>
-          <select id="borrowReason" class="form-select form-select-lg bg-light">
+        <div class="mb-4" id="reasonArea">
+          <label class="form-label">借用原因</label>
+          <select id="borrowReason" class="form-select">
             <option value="教學用">教學用</option>
             <option value="報讀用">報讀用</option>
             <option value="同學請假(混成教學)">同學請假(混成教學)</option>
@@ -145,26 +237,26 @@
           </select>
         </div>
         
-        <div class="p-3 bg-light rounded-3 mb-3">
-           <div class="d-flex justify-content-between align-items-center mb-2">
-             <label class="form-check-label fw-bold" for="powerCable">🔌 電源線</label>
-             <div class="form-check form-switch">
-               <input class="form-check-input" type="checkbox" id="powerCable" checked>
-             </div>
+        <div class="custom-switch mb-3">
+           <label class="form-label mb-0 fs-6"><i class="bi bi-plug-fill text-primary"></i> 包含電源線</label>
+           <div class="form-check form-switch m-0">
+             <input class="form-check-input fs-4 m-0" type="checkbox" id="powerCable" checked>
            </div>
-           <input type="text" id="note" class="form-control border-0 bg-white" placeholder="備註 (例如：含延長線)">
+        </div>
+        <div class="mb-4">
+           <input type="text" id="note" class="form-control" placeholder="備註 (例如：含延長線)">
         </div>
         
         <div class="mb-2">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="form-label fw-bold text-secondary small">電子簽名</label>
-            <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="signaturePad.clear()">重簽</button>
+          <label class="form-label">電子簽名</label>
+          <div id="signature-pad-container">
+            <button class="clear-btn" onclick="signaturePad.clear()"><i class="bi bi-eraser-fill"></i> 清除重簽</button>
+            <canvas id="signature-canvas"></canvas>
           </div>
-          <div id="signature-pad-container"><canvas id="signature-canvas"></canvas></div>
         </div>
       </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-primary w-100 fw-bold py-3 rounded-3" id="submitBtn" onclick="submitBatch()">確認提交</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-action w-100 py-3" id="submitBtn" onclick="submitBatch()">確認提交</button>
       </div>
     </div>
   </div>
@@ -172,17 +264,15 @@
 
 <script>
   // ==========================================
-  // ★★★ 請在此填入您的 GAS Web App 網址 ★★★
+  // GAS Web App 網址
   // ==========================================
   const API_URL = "https://script.google.com/macros/s/AKfycbxAWulpRiVMiwYUSj5IFpc-9jctUAqoaylK6p7B9JZU7CgubeZiIugjIAfttoAAn7yq/exec";
-  // ==========================================
 
   let signaturePad;
   let actionModal;
   let selectedDevices = [];
   let currentRole = 'Faculty';
 
-  // 定義班級結構 (Hardcoded)
   const SCHOOL_DATA = {
     "高中部": [
       { start: 401, end: 407 },
@@ -199,12 +289,12 @@
   window.onload = () => {
     actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
     signaturePad = new SignaturePad(document.getElementById('signature-canvas'), {
-        minWidth: 1, maxWidth: 2.5, penColor: "rgb(0, 0, 0)"
+        minWidth: 1.5, maxWidth: 3.5, penColor: "#000"
     });
     document.getElementById('actionModal').addEventListener('shown.bs.modal', resizeCanvas);
     
-    initStudentData(); // 初始化下拉選單
-    loadDevices();     // 載入設備
+    initStudentData(); 
+    loadDevices();     
   };
 
   async function callApi(action, data = {}) {
@@ -221,18 +311,16 @@
     }
   }
 
-  // --- 骨架屏渲染 (Skeleton) ---
   function renderSkeleton() {
     const container = document.getElementById('grid-container');
     let html = '';
-    // 產生 12 個骨架卡片
     for(let i=0; i<12; i++) {
         html += `
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i*0.05}s">
           <div class="skeleton-card" aria-hidden="true">
-             <div class="placeholder-glow w-100 text-center">
-                <span class="placeholder col-6 mb-3 bg-secondary skeleton-text" style="height:24px;"></span>
-                <span class="placeholder col-8 bg-light skeleton-text" style="height:16px;"></span>
+             <div class="w-100 text-center">
+                <div class="skeleton-text mx-auto mb-3" style="width: 70%; height:32px;"></div>
+                <div class="skeleton-text mx-auto" style="width: 50%; height:20px;"></div>
              </div>
           </div>
         </div>`;
@@ -241,68 +329,92 @@
   }
 
   function handleRefreshClick() {
+    loadDevices(true);
+  }
+
+  function loadDevices(forceRefresh = false) {
+    selectedDevices = [];
+    document.getElementById('bottomBar').classList.remove('show');
+    
+    const cachedData = localStorage.getItem('devicesCache');
+    const syncStatus = document.getElementById('sync-status');
+    const syncText = document.getElementById('sync-text');
+    
+    // Cache-first 邏輯
+    if (cachedData && !forceRefresh) {
+        renderGrid(JSON.parse(cachedData));
+        syncStatus.style.display = 'inline-flex';
+        syncStatus.className = 'sync-status syncing';
+        syncText.innerText = "背景同步更新中...";
+    } else {
+        renderSkeleton();
+        syncStatus.style.display = 'none';
+    }
+
     const btn = document.getElementById('refresh-btn');
     const btnIcon = document.getElementById('btn-icon');
     btn.disabled = true;
     btnIcon.classList.add('spin');
-    loadDevices();
-  }
 
-  function loadDevices() {
-    selectedDevices = [];
-    document.getElementById('bottomBar').style.display = 'none';
-    
-    // 1. 先顯示骨架屏
-    renderSkeleton();
-
-    // 2. 呼叫 API
+    // 背景更新
     callApi('getDeviceStatus').then(devices => {
-        // 3. 渲染真實數據
-        renderGrid(devices);
+        const newDataString = JSON.stringify(devices);
         
-        // 4. 重置按鈕狀態
-        const btn = document.getElementById('refresh-btn');
-        const btnIcon = document.getElementById('btn-icon');
+        // 若資料有變，或強制更新，或當時只有骨架屏，則重繪
+        if (newDataString !== cachedData || forceRefresh || !cachedData) {
+            localStorage.setItem('devicesCache', newDataString);
+            
+            // 避免覆蓋正在選取的設備狀態，實做簡單比對即可。這裡直接重繪。
+            // 也可以留著不重繪 if (selectedDevices.length === 0) renderGrid(devices);
+            if (selectedDevices.length === 0) {
+              renderGrid(devices);
+            }
+        }
+        
         btn.disabled = false;
         btnIcon.classList.remove('spin');
+        
+        syncStatus.style.display = 'inline-flex';
+        syncStatus.className = 'sync-status';
+        syncText.innerText = "已更新至最新狀態";
+        setTimeout(() => { if (!btn.disabled) syncStatus.style.display = 'none'; }, 3000);
     });
   }
 
   function renderGrid(devices) {
     const container = document.getElementById('grid-container');
-    container.innerHTML = ''; // 清空骨架
+    container.innerHTML = ''; 
 
     if (devices.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted py-5">目前沒有載具資料</div>';
+        container.innerHTML = '<div class="col-12 text-center text-muted py-5 mt-5 fw-bold fs-5">目前沒有載具資料</div>';
         return;
     }
 
-    devices.forEach(d => {
+    devices.forEach((d, i) => {
       let statusClass = (d.status === '可借用') ? 'status-available' : (d.status === '其他' ? 'status-other' : 'status-inuse');
       let displayInfo = (d.status === '可借用') ? '可借用' : (d.status === '其他' ? (d.user || '維修/其他') : d.user);
       
+      let isSelected = selectedDevices.some(sd => sd.id === d.id);
+      let selectedClass = isSelected ? 'selected' : '';
+
       container.innerHTML += `
-        <div class="col-6 col-md-3">
-          <div class="device-card ${statusClass}" id="card-${d.id}" onclick="toggleSelect('${d.id}', '${d.status}', '${d.user}')">
+        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i*0.03}s">
+          <div class="device-card ${statusClass} ${selectedClass}" id="card-${d.id}" onclick="toggleSelect('${d.id}', '${d.status}', '${d.user}')">
             <div class="device-id">${d.id}</div>
-            <div class="device-info text-truncate">${displayInfo}</div>
+            <div class="device-info text-truncate" style="max-width: 85%;">${displayInfo}</div>
           </div>
         </div>`;
     });
   }
 
-  // --- 初始化學生資料 (取代舊的 loadUserData) ---
   function initStudentData() {
     const selSeat = document.getElementById('selSeat');
-    // 產生座號 01-40 + 其他
     selSeat.innerHTML = '';
     for (let i = 1; i <= 45; i++) {
       let val = i.toString().padStart(2, '0');
       selSeat.innerHTML += `<option value="${val}號">${val}號</option>`;
     }
     selSeat.innerHTML += `<option value="其他">其他</option>`;
-    
-    // 觸發一次班級更新
     updateClassList();
   }
 
@@ -331,31 +443,46 @@
 
   function toggleSelect(id, status, user) {
     if (status === '其他') {
-      Swal.fire({ icon: 'error', title: '無法選取', text: '此載具目前狀態為「其他」，不可進行借還', timer: 1500, showConfirmButton: false });
+      Swal.fire({ icon: 'error', title: '無法選取', text: '此載具目前進行維護中或暫不提供借用。', timer: 2000, showConfirmButton: false });
       return;
     }
+    
+    // Check constraint before modifying state
+    if (selectedDevices.length > 0 && selectedDevices[0].status !== status) {
+        // Find existing index
+        const idx = selectedDevices.findIndex(d => d.id === id);
+        // if idx === -1 (meaning we are adding a NEW element with conflict)
+        if (idx === -1) {
+            Swal.fire({ icon: 'warning', title: '狀態衝突', text: '不可同時選取需要「借出」與需要「歸還」的載具，請分批處理。' });
+            return;
+        }
+    }
+    
     const card = document.getElementById('card-' + id);
     const index = selectedDevices.findIndex(d => d.id === id);
     if (index > -1) {
       selectedDevices.splice(index, 1);
       card.classList.remove('selected');
     } else {
-      if (selectedDevices.length > 0 && selectedDevices[0].status !== status) {
-        Swal.fire('選取限制', '不可同時選取借出與歸還載具', 'warning');
-        return;
-      }
       selectedDevices.push({id, status, user});
       card.classList.add('selected');
     }
-    document.getElementById('bottomBar').style.display = selectedDevices.length > 0 ? 'block' : 'none';
+    
+    const bottomBar = document.getElementById('bottomBar');
+    if (selectedDevices.length > 0) {
+      bottomBar.classList.add('show');
+    } else {
+      bottomBar.classList.remove('show');
+    }
     document.getElementById('selectedCount').innerText = selectedDevices.length;
   }
 
   function resizeCanvas() {
     const canvas = document.getElementById('signature-canvas');
+    const container = document.getElementById('signature-pad-container');
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = canvas.offsetWidth * ratio;
-    canvas.height = canvas.offsetHeight * ratio;
+    canvas.width = container.offsetWidth * ratio;
+    canvas.height = container.offsetHeight * ratio;
     canvas.getContext("2d").scale(ratio, ratio);
     signaturePad.clear();
   }
@@ -372,10 +499,7 @@
       document.getElementById('roleToggleArea').style.display = 'none';
       document.getElementById('facultyInputArea').style.display = 'block';
       document.getElementById('studentInputArea').style.display = 'none';
-      
-      // 如果是歸還，預填第一台的使用者名稱
       document.getElementById('facultyName').value = selectedDevices[0].user;
-      
       reasonArea.style.display = 'none'; 
       document.getElementById('borrowReason').value = '其他'; 
     } else {
@@ -398,12 +522,13 @@
     }
 
     if (!finalName || signaturePad.isEmpty()) {
-      Swal.fire('填寫未完成', '請提供姓名與簽名', 'info');
+      Swal.fire({ icon: 'warning', title: '資料未齊全', text: '請確實填寫姓名並完成電子簽名！' });
       return;
     }
 
     const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.innerText = "處理中...";
+    btn.disabled = true; 
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>處理中...';
 
     const payload = {
       deviceIds: selectedDevices.map(d => d.id),
@@ -419,15 +544,19 @@
         if(res.status === 'success'){
             Swal.fire({
               icon: 'success', 
-              title: '完成', 
+              title: '處理完成！', 
               text: res.message, 
-              confirmButtonColor: '#0d6efd'
+              confirmButtonColor: '#4F46E5',
+              customClass: { popup: 'rounded-4' }
             });
             actionModal.hide();
-            loadDevices();
+            // 送出成功後強制更新狀態
+            loadDevices(true);
         } else {
-            Swal.fire('失敗', res.message, 'error');
+            Swal.fire('處理失敗', res.message, 'error');
         }
+        btn.disabled = false; btn.innerText = "確認提交";
+    }).catch(() => {
         btn.disabled = false; btn.innerText = "確認提交";
     });
   }
