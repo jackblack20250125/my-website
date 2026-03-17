@@ -243,115 +243,122 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbyBc_yAr1zWzBuWTPZGAwWRKfNqTqyMZZ47nbFzUQPuaCzLIUsFVO72_1EdwSOi0oU1EQ/exec';
   const IOT_URL = 'https://jackblack20250125.github.io/my-website/IOT.html';
 
-  // ── 解析 URL 參數 ──
-  const params   = new URLSearchParams(location.search);
-  const unit     = params.get('unit')     || '';
-  const unitName = params.get('unitName') || '未知處室';
-  const nendo    = params.get('nendo')    || '';
-  const ki       = params.get('ki')       || '';
+  try {
+    // ── 解析 URL 參數 ──
+    const params   = new URLSearchParams(location.search);
+    const unit     = params.get('unit')     || '';
+    const unitName = params.get('unitName') || '未知處室';
+    const nendo    = params.get('nendo')    || '';
+    const ki       = params.get('ki')       || '';
 
-  document.getElementById('dispUnitCode').textContent = unit || '—';
-  document.getElementById('dispUnitName').textContent = unitName;
-  document.getElementById('dispMeta').textContent =
-    `民國 ${nendo} 年度 第 ${ki} 季`;
+    document.getElementById('dispUnitCode').textContent = unit || '—';
+    document.getElementById('dispUnitName').textContent = unitName;
+    document.getElementById('dispMeta').textContent =
+      `民國 ${nendo} 年度 第 ${ki} 季`;
 
-  // ── 初始化 SignaturePad ──
-  const canvas = document.getElementById('sigCanvas');
+    // ── 初始化 SignaturePad ──
+    const canvas = document.getElementById('sigCanvas');
 
-  function resizeCanvas() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    const wrap  = document.getElementById('sigWrap');
-    canvas.width  = wrap.offsetWidth  * ratio;
-    canvas.height = 200 * ratio;
-    canvas.getContext('2d').scale(ratio, ratio);
-    pad.clear(); // clear on resize
-  }
-
-  const pad = new SignaturePad(canvas, {
-    penColor: '#1e3a5f',
-    minWidth: 1.5,
-    maxWidth: 3.5,
-  });
-
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  // 有簽名才啟用送出
-  const hint      = document.getElementById('sigHint');
-  const btnSubmit = document.getElementById('btnSubmit');
-  pad.addEventListener('beginStroke', () => {
-    hint.style.opacity = '0';
-  });
-  pad.addEventListener('endStroke', () => {
-    btnSubmit.disabled = pad.isEmpty();
-  });
-
-  document.getElementById('btnClear').addEventListener('click', () => {
-    pad.clear();
-    hint.style.opacity = '1';
-    btnSubmit.disabled = true;
-  });
-
-  // ── 送出 ──
-  btnSubmit.addEventListener('click', async () => {
-    if (pad.isEmpty()) return;
-
-    const sigBase64 = pad.toDataURL('image/png');
-
-    // 顯示 loading
-    document.getElementById('sigSection').style.display = 'none';
-    document.getElementById('loadingScreen').classList.add('show');
-    document.getElementById('errMsg').classList.remove('show');
-
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // GAS CORS workaround
-        body: JSON.stringify({
-          action: 'saveSignature',
-          unit, unitName, nendo, ki,
-          signatureBase64: sigBase64
-        })
-      });
-      const json = await res.json();
-
-      if (json.status !== 'success') throw new Error(json.message || '伺服器錯誤');
-
-      // 成功
-      document.getElementById('loadingScreen').classList.remove('show');
-      document.getElementById('successScreen').classList.add('show');
-      startCountdown(3);
-
-    } catch(err) {
-      document.getElementById('loadingScreen').classList.remove('show');
-      document.getElementById('sigSection').style.display = '';
-      const errEl = document.getElementById('errMsg');
-      errEl.textContent = '❌ 送出失敗：' + err.message;
-      errEl.classList.add('show');
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const wrap  = document.getElementById('sigWrap');
+      if (!wrap) return;
+      
+      canvas.width  = wrap.offsetWidth  * ratio;
+      canvas.height = 200 * ratio;
+      canvas.getContext('2d').scale(ratio, ratio);
+      if (typeof pad !== 'undefined' && pad) pad.clear();
     }
-  });
 
-  function startCountdown(secs) {
-    const bar  = document.getElementById('countdownBar');
-    const sub  = document.getElementById('successSub');
-    let remaining = secs;
-
-    bar.style.transition = 'none';
-    bar.style.width = '100%';
-
-    requestAnimationFrame(() => {
-      bar.style.transition = `width ${secs}s linear`;
-      bar.style.width = '0%';
+    const pad = new SignaturePad(canvas, {
+      penColor: '#1e3a5f',
+      minWidth: 1.5,
+      maxWidth: 3.5,
     });
 
-    const tick = setInterval(() => {
-      remaining--;
-      sub.textContent = `${remaining} 秒後返回…`;
-      if (remaining <= 0) {
-        clearInterval(tick);
-        location.href = IOT_URL;
+    // 等待 DOM 繪製完成再 resize
+    setTimeout(resizeCanvas, 100);
+    window.addEventListener('resize', resizeCanvas);
+
+    // 有簽名才啟用送出
+    const hint      = document.getElementById('sigHint');
+    const btnSubmit = document.getElementById('btnSubmit');
+    pad.addEventListener('beginStroke', () => {
+      hint.style.opacity = '0';
+    });
+    pad.addEventListener('endStroke', () => {
+      btnSubmit.disabled = pad.isEmpty();
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      pad.clear();
+      hint.style.opacity = '1';
+      btnSubmit.disabled = true;
+    });
+
+    // ── 送出 ──
+    btnSubmit.addEventListener('click', async () => {
+      if (pad.isEmpty()) return;
+
+      const sigBase64 = pad.toDataURL('image/png');
+
+      // 顯示 loading
+      document.getElementById('sigSection').style.display = 'none';
+      document.getElementById('loadingScreen').classList.add('show');
+      document.getElementById('errMsg').classList.remove('show');
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' }, // GAS CORS workaround
+          body: JSON.stringify({
+            action: 'saveSignature',
+            unit, unitName, nendo, ki,
+            signatureBase64: sigBase64
+          })
+        });
+        const json = await res.json();
+
+        if (json.status !== 'success') throw new Error(json.message || '伺服器錯誤');
+
+        // 成功
+        document.getElementById('loadingScreen').classList.remove('show');
+        document.getElementById('successScreen').classList.add('show');
+        startCountdown(3);
+
+      } catch(err) {
+        document.getElementById('loadingScreen').classList.remove('show');
+        document.getElementById('sigSection').style.display = '';
+        const errEl = document.getElementById('errMsg');
+        errEl.textContent = '❌ 送出失敗：' + err.message;
+        errEl.classList.add('show');
       }
-    }, 1000);
+    });
+
+    function startCountdown(secs) {
+      const bar  = document.getElementById('countdownBar');
+      const sub  = document.getElementById('successSub');
+      let remaining = secs;
+
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${secs}s linear`;
+        bar.style.width = '0%';
+      });
+
+      const tick = setInterval(() => {
+        remaining--;
+        sub.textContent = `${remaining} 秒後返回…`;
+        if (remaining <= 0) {
+          clearInterval(tick);
+          location.href = IOT_URL;
+        }
+      }, 1000);
+    }
+  } catch(e) {
+    document.body.innerHTML += `<div style="color:red; background:#fff; padding:20px; word-break:break-all; z-index:9999; position:relative;">初始化發生嚴重錯誤: ${e.message}<br/>${e.stack}</div>`;
   }
 </script>
 </body>
