@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>IoT 盤點簽名確認</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #2563eb;
+      --accent:  #6366f1;
+      --green:   #059669;
+      --bg:      #f0f4ff;
+      --surface: #ffffff;
+      --border:  #e2e8f0;
+      --text:    #0f172a;
+      --text-sub:#475569;
+      --text-muted:#94a3b8;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 48px;
+    }
+
+    .top-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: rgba(37,99,235,.08);
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(37,99,235,.10);
+      width: 100%; max-width: 440px;
+      padding: 28px 24px 24px;
+    }
+
+    .unit-code-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; font-weight: 700;
+      color: var(--primary);
+      background: rgba(37,99,235,.10);
+      padding: 3px 10px; border-radius: 4px;
+      display: inline-block; margin-bottom: 6px;
+    }
+
+    .unit-name {
+      font-size: 1.15rem; font-weight: 900;
+      color: var(--text); margin-bottom: 4px;
+    }
+
+    .meta-row {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem; color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .sig-label {
+      font-size: .78rem; font-weight: 700;
+      color: var(--text-sub); margin-bottom: 8px;
+    }
+
+    .sig-wrap {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      background: #fafbff;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .sig-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 200px;
+      cursor: crosshair;
+    }
+    .sig-hint {
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; color: var(--text-muted);
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+
+    .btn-row {
+      display: flex; gap: 10px; margin-top: 12px;
+    }
+
+    .btn-clear {
+      flex: 0 0 auto;
+      padding: 10px 18px;
+      border: 1.5px solid var(--border);
+      background: none; border-radius: 10px;
+      font-size: .82rem; color: var(--text-sub);
+      cursor: pointer; font-family: inherit;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-clear:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-submit {
+      flex: 1;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .9rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 16px rgba(37,99,235,.3);
+    }
+    .btn-submit:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn-submit:active:not(:disabled) { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── 狀態畫面 ── */
+    .state-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 24px 0 8px;
+      gap: 12px;
+    }
+    .state-screen.show { display: flex; }
+
+    .state-icon {
+      font-size: 3rem;
+      animation: popIn .4s cubic-bezier(.175,.885,.32,1.275) both;
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .state-title {
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--text);
+    }
+    .state-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem; color: var(--text-muted);
+    }
+
+    .countdown-bar-wrap {
+      width: 100%; background: var(--border);
+      border-radius: 999px; height: 4px; overflow: hidden;
+    }
+    .countdown-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), #34d399);
+      border-radius: 999px;
+      width: 100%;
+      transition: width linear;
+    }
+
+    .loading-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      color: #dc2626; font-size: .82rem;
+      background: #fff5f5; border: 1px solid #fca5a5;
+      border-radius: 10px; padding: 12px 16px;
+      margin-top: 12px; display: none;
+    }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="top-badge">路竹高中 · IoT 設備盤點確認</div>
+
+  <div class="card" id="mainCard">
+    <!-- 單位資訊 -->
+    <div class="unit-code-badge" id="dispUnitCode">—</div>
+    <div class="unit-name" id="dispUnitName">讀取中…</div>
+    <div class="meta-row" id="dispMeta">—</div>
+
+    <!-- 簽名區 -->
+    <div id="sigSection">
+      <div class="sig-label">請在下方空白處簽名</div>
+      <div class="sig-wrap" id="sigWrap">
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-hint" id="sigHint">↓ 在此簽名</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-clear" id="btnClear">清除</button>
+        <button class="btn-submit" id="btnSubmit" disabled>送出確認</button>
+      </div>
+
+      <div class="error-msg" id="errMsg"></div>
+    </div>
+
+    <!-- 送出中 -->
+    <div class="state-screen" id="loadingScreen">
+      <div class="loading-spinner"></div>
+      <div class="state-title">送出中…</div>
+      <div class="state-sub">請稍候</div>
+    </div>
+
+    <!-- 成功 -->
+    <div class="state-screen" id="successScreen">
+      <div class="state-icon">✅</div>
+      <div class="state-title">簽名已送出！</div>
+      <div class="state-sub" id="successSub">3 秒後返回…</div>
+      <div class="countdown-bar-wrap" style="width:180px">
+        <div class="countdown-bar" id="countdownBar"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyBc_yAr1zWzBuWTPZGAwWRKfNqTqyMZZ47nbFzUQPuaCzLIUsFVO72_1EdwSOi0oU1EQ/exec';
+  const IOT_URL = 'https://jackblack20250125.github.io/my-website/IOT.html';
+
+  // ── 解析 URL 參數 ──
+  const params   = new URLSearchParams(location.search);
+  const unit     = params.get('unit')     || '';
+  const unitName = params.get('unitName') || '未知處室';
+  const nendo    = params.get('nendo')    || '';
+  const ki       = params.get('ki')       || '';
+
+  document.getElementById('dispUnitCode').textContent = unit || '—';
+  document.getElementById('dispUnitName').textContent = unitName;
+  document.getElementById('dispMeta').textContent =
+    `民國 ${nendo} 年度 第 ${ki} 季`;
+
+  // ── 初始化 SignaturePad ──
+  const canvas = document.getElementById('sigCanvas');
+
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const wrap  = document.getElementById('sigWrap');
+    canvas.width  = wrap.offsetWidth  * ratio;
+    canvas.height = 200 * ratio;
+    canvas.getContext('2d').scale(ratio, ratio);
+    pad.clear(); // clear on resize
+  }
+
+  const pad = new SignaturePad(canvas, {
+    penColor: '#1e3a5f',
+    minWidth: 1.5,
+    maxWidth: 3.5,
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // 有簽名才啟用送出
+  const hint      = document.getElementById('sigHint');
+  const btnSubmit = document.getElementById('btnSubmit');
+  pad.addEventListener('beginStroke', () => {
+    hint.style.opacity = '0';
+  });
+  pad.addEventListener('endStroke', () => {
+    btnSubmit.disabled = pad.isEmpty();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    pad.clear();
+    hint.style.opacity = '1';
+    btnSubmit.disabled = true;
+  });
+
+  // ── 送出 ──
+  btnSubmit.addEventListener('click', async () => {
+    if (pad.isEmpty()) return;
+
+    const sigBase64 = pad.toDataURL('image/png');
+
+    // 顯示 loading
+    document.getElementById('sigSection').style.display = 'none';
+    document.getElementById('loadingScreen').classList.add('show');
+    document.getElementById('errMsg').classList.remove('show');
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // GAS CORS workaround
+        body: JSON.stringify({
+          action: 'saveSignature',
+          unit, unitName, nendo, ki,
+          signatureBase64: sigBase64
+        })
+      });
+      const json = await res.json();
+
+      if (json.status !== 'success') throw new Error(json.message || '伺服器錯誤');
+
+      // 成功
+      document.getElementById('loadingScreen').classList.remove('show');
+      document.getElementById('successScreen').classList.add('show');
+      startCountdown(3);
+
+    } catch(err) {
+      document.getElementById('loadingScreen').classList.remove('show');
+      document.getElementById('sigSection').style.display = '';
+      const errEl = document.getElementById('errMsg');
+      errEl.textContent = '❌ 送出失敗：' + err.message;
+      errEl.classList.add('show');
+    }
+  });
+
+  function startCountdown(secs) {
+    const bar  = document.getElementById('countdownBar');
+    const sub  = document.getElementById('successSub');
+    let remaining = secs;
+
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${secs}s linear`;
+      bar.style.width = '0%';
+    });
+
+    const tick = setInterval(() => {
+      remaining--;
+      sub.textContent = `${remaining} 秒後返回…`;
+      if (remaining <= 0) {
+        clearInterval(tick);
+        location.href = IOT_URL;
+      }
+    }, 1000);
+  }
+</script>
+</body>
+</html>

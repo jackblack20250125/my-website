@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>路竹高中 IoT 設備盤點</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f0f4ff;
+      --surface:  #ffffff;
+      --surface2: #f8faff;
+      --primary:  #2563eb;
+      --primary-light: #dbeafe;
+      --secondary:#0ea5e9;
+      --accent:   #6366f1;
+      --text:     #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --border:   #e2e8f0;
+      --shadow:   0 4px 24px rgba(37,99,235,.10);
+      --shadow-lg: 0 12px 48px rgba(37,99,235,.16);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans TC', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════
+       HERO
+    ══════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px clamp(24px, 6vw, 120px) 80px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 50%, #ede9fe 100%);
+    }
+
+    /* decorative blobs */
+    .hero::before, .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+    }
+    .hero::before {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,.18) 0%, transparent 70%);
+      top: -100px; right: -100px;
+    }
+    .hero::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(14,165,233,.15) 0%, transparent 70%);
+      bottom: 0px; left: -60px;
+    }
+
+    .hero-inner { position: relative; z-index: 1; }
+
+    .hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(.72rem, 1.2vw, .88rem);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 28px; height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 2px;
+    }
+
+    .hero-title {
+      font-size: clamp(1.9rem, 5vw, 4.4rem);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+      max-width: 900px;
+      color: var(--text);
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-meta {
+      margin-top: 36px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .meta-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      font-weight: 600;
+      border: 1.5px solid var(--primary-light);
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.8);
+      color: var(--primary);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 8px rgba(37,99,235,.08);
+    }
+
+    /* big decorative text */
+    .hero-deco {
+      position: absolute;
+      right: clamp(-20px, 4vw, 60px);
+      bottom: -40px;
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(100px, 16vw, 200px);
+      font-weight: 800;
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(37,99,235,.12);
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* loading state tag */
+    .tag-loading {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      padding: 4px 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      border-radius: 6px;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── Scroll Indicator ── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .scroll-hint:hover { color: var(--primary); }
+
+    .scroll-hint .arrow-wrap {
+      width: 36px; height: 36px;
+      border: 1.5px solid currentColor;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: bounce 1.8s ease-in-out infinite;
+    }
+    .scroll-hint svg {
+      width: 16px; height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+
+    /* ══════════════════════════════════════
+       UNITS SECTION
+    ══════════════════════════════════════ */
+    .section {
+      padding: 80px clamp(24px, 6vw, 120px) 100px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 700;
+      background: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    .section-title {
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 800;
+      color: var(--text);
+    }
+    .section-count {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .unit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 22px;
+      cursor: pointer;
+      position: relative;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      animation: fadeUp .4s ease both;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .unit-card:nth-child(1)  { animation-delay: .04s }
+    .unit-card:nth-child(2)  { animation-delay: .08s }
+    .unit-card:nth-child(3)  { animation-delay: .12s }
+    .unit-card:nth-child(4)  { animation-delay: .16s }
+    .unit-card:nth-child(5)  { animation-delay: .20s }
+    .unit-card:nth-child(6)  { animation-delay: .24s }
+    .unit-card:nth-child(7)  { animation-delay: .28s }
+    .unit-card:nth-child(8)  { animation-delay: .32s }
+    .unit-card:nth-child(9)  { animation-delay: .36s }
+    .unit-card:nth-child(10) { animation-delay: .40s }
+    .unit-card:nth-child(11) { animation-delay: .44s }
+    .unit-card:nth-child(12) { animation-delay: .48s }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .unit-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-light);
+    }
+
+    .unit-card-index {
+      position: absolute;
+      top: 14px; right: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .unit-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+      background: var(--primary-light);
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .unit-name {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text);
+    }
+
+    .unit-status {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .7rem;
+      color: var(--text-muted);
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      opacity: .5;
+    }
+
+    /* skeleton */
+    .skeleton-card {
+      background: linear-gradient(90deg, #e8edf5 25%, #dce4f0 50%, #e8edf5 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 22px;
+      height: 110px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0 } }
+
+    /* error */
+    .error-msg {
+      color: #dc2626;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .85rem;
+      padding: 20px 24px;
+      border: 1.5px dashed #fca5a5;
+      border-radius: 12px;
+      background: #fff5f5;
+      max-width: 480px;
+    }
+
+    /* ── footer ── */
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem;
+      color: var(--text-muted);
+      background: var(--surface);
+    }
+
+    /* ══════════════════════════════════════
+       MODAL
+    ══════════════════════════════════════ */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(15,23,42,.45);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 24px 80px rgba(37,99,235,.18);
+      width: 100%; max-width: 940px;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      transform: translateY(24px);
+      transition: transform .25s ease;
+      overflow: hidden;
+    }
+    .modal-backdrop.open .modal { transform: translateY(0); }
+
+    .modal-head {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .modal-head-info { flex: 1; }
+    .modal-unit-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem; font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px; border-radius: 4px;
+      display: inline-block; margin-bottom: 6px;
+    }
+    .modal-title {
+      font-size: 1.15rem; font-weight: 800;
+      color: var(--text); line-height: 1.3;
+    }
+    .modal-subtitle {
+      margin-top: 6px;
+      font-size: .82rem; color: var(--text-muted);
+    }
+    .modal-subtitle strong { color: var(--primary); }
+    .modal-close {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border: 1px solid var(--border); border-radius: 50%;
+      background: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .modal-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+    .modal-body {
+      flex: 1; overflow-x: auto; overflow-y: auto;
+      padding: 20px 28px 0;
+    }
+
+    .modal-table {
+      width: 100%; border-collapse: collapse;
+      font-size: .78rem;
+      white-space: nowrap;
+    }
+    .modal-table thead th {
+      position: sticky; top: 0;
+      background: var(--surface2);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-sub);
+      border-bottom: 2px solid var(--border);
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .modal-table tbody tr {
+      transition: background .12s;
+    }
+    .modal-table tbody tr:hover { background: #eff6ff; }
+    .modal-table tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .modal-table tbody tr:last-child td { border-bottom: none; }
+
+    .modal-empty {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+
+    .modal-loading {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--text-muted);
+      font-size: .85rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .modal-loading span {
+      display: inline-block;
+      animation: blink 1.2s infinite;
+    }
+
+    .modal-foot {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      background: var(--surface2);
+    }
+    .modal-count-text {
+      font-size: .82rem; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-confirm {
+      padding: 10px 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      border: none; border-radius: 999px;
+      font-size: .88rem; font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 16px rgba(37,99,235,.3);
+    }
+    .btn-confirm:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-confirm:active { transform: translateY(0); }
+    .btn-confirm:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── confirmed card ── */
+    .unit-card.confirmed {
+      border-color: #10b981;
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    }
+    .unit-card.confirmed .dot { background: #059669; opacity: 1; }
+    .unit-card.confirmed .unit-status { color: #059669; font-weight: 600; }
+
+    /* ── QR modal ── */
+    .qr-backdrop {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(15,23,42,.55);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .qr-backdrop.open { opacity: 1; pointer-events: auto; }
+    .qr-box {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 24px 80px rgba(37,99,235,.22);
+      width: 100%; max-width: 360px;
+      padding: 32px 28px;
+      text-align: center;
+      transform: scale(.94);
+      transition: transform .25s ease;
+    }
+    .qr-backdrop.open .qr-box { transform: scale(1); }
+    .qr-box-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .qr-box-sub {
+      font-size: .75rem; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 20px;
+    }
+    #qrCanvas { display: flex; justify-content: center; margin: 0 auto 16px; }
+    .qr-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .58rem; color: var(--text-muted);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px;
+      word-break: break-all; text-align: left; margin-bottom: 20px;
+    }
+    .qr-close-btn {
+      padding: 10px 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; border: none; border-radius: 999px;
+      font-weight: 700; cursor: pointer;
+      transition: opacity .2s;
+    }
+    .qr-close-btn:hover { opacity: .85; }
+  </style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">路竹高級中學 · 資訊組</p>
+    <h1 class="hero-title">
+      <span id="heroTitle">
+        <span class="tag-loading">讀取中…</span>
+      </span>
+    </h1>
+    <div class="hero-meta" id="heroMeta">
+      <!-- 動態填入 -->
+    </div>
+  </div>
+  <div class="hero-deco">IoT</div>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint" onclick="document.querySelector('.section').scrollIntoView({behavior:'smooth'})">
+    <span>往下滑查看單位</span>
+    <div class="arrow-wrap">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+<!-- ══ UNITS ══ -->
+<main class="section" id="unitsSection">
+  <div class="section-header">
+    <span class="section-label">§ 01</span>
+    <h2 class="section-title">參與單位</h2>
+    <span class="section-count" id="unitCount">—</span>
+  </div>
+  <div class="units-grid" id="unitsGrid">
+    <!-- skeleton placeholders -->
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+</main>
+
+<footer>
+  © <span id="footerYear"></span> 路竹高級中學 資訊組 ·
+  資料來源：Google Sheets API
+</footer>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyBc_yAr1zWzBuWTPZGAwWRKfNqTqyMZZ47nbFzUQPuaCzLIUsFVO72_1EdwSOi0oU1EQ/exec';
+
+  let gNendo = '115', gKi = '1';
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+  // ── 解析處室代碼與名稱 (格式: "021.教務處設備組")
+  function parseUnit(str) {
+    const trimmed = (str || '').trim();
+    const dot = trimmed.indexOf('.');
+    if (dot === -1) return { code: '', name: trimmed };
+    return { code: trimmed.slice(0, dot), name: trimmed.slice(dot + 1) };
+  }
+
+  async function loadSettings() {
+    const res = await fetch(`${API_URL}?action=read&sheetName=${encodeURIComponent('設定')}`);
+    const json = await res.json();
+    if (json.status !== 'success') throw new Error(json.message);
+    return json.data; // array of objects
+  }
+
+  function renderHero(nendo, ki) {
+    const titleEl = document.getElementById('heroTitle');
+    titleEl.innerHTML = `
+      路竹<span class="highlight">${nendo}</span>年度第<span class="highlight">${ki}</span>季<br>
+      網路儲存伺服器(NAS)更新情形及<br>物聯網(IoT)設備盤點一案`;
+
+    const metaEl = document.getElementById('heroMeta');
+    metaEl.innerHTML = `
+      <span class="meta-chip">民國 ${nendo} 年度</span>
+      <span class="meta-chip">第 ${ki} 季</span>
+      <span class="meta-chip">IoT / NAS 盤點</span>`;
+  }
+
+  function renderUnits(rows) {
+    const grid = document.getElementById('unitsGrid');
+    grid.innerHTML = '';
+
+    const units = rows
+      .map(r => (r['處室單位'] || '').trim())
+      .filter(Boolean)
+      .map(u => { const p = parseUnit(u); p._raw = u; return p; })
+      // 依前三碼（code）由小到大排序，無code者排最後
+      .sort((a, b) => {
+        if (!a.code && !b.code) return 0;
+        if (!a.code) return 1;
+        if (!b.code) return -1;
+        return a.code.localeCompare(b.code, 'zh-TW', { numeric: true });
+      });
+
+    document.getElementById('unitCount').textContent = `共 ${units.length} 個單位`;
+
+    units.forEach(({ code, name, _raw }, i) => {
+      const card = document.createElement('div');
+      card.className = 'unit-card';
+      card.dataset.unitRaw = units[i]._raw || '';
+      card.dataset.code = code;
+      card.innerHTML = `
+        <span class="unit-card-index">${String(i + 1).padStart(2, '0')}</span>
+        <div class="unit-code">${code || '—'}</div>
+        <div class="unit-name">${name}</div>
+        <div class="unit-status"><span class="dot"></span> 點擊查看資料</div>`;
+      card.addEventListener('click', () => openModal({ code, name, raw: card.dataset.unitRaw }));
+      grid.appendChild(card);
+    });
+  }
+
+  (async () => {
+    try {
+      const rows = await loadSettings();
+
+      const firstRow = rows[0] || {};
+      const nendoRaw = (firstRow['年度'] || '').replace(/年度/g, '').trim();
+      const kiRaw    = (firstRow['季']   || '').replace(/第|季/g, '').trim();
+
+      gNendo = nendoRaw || '115';
+      gKi    = kiRaw    || '1';
+      renderHero(gNendo, gKi);
+      renderUnits(rows);
+      loadConfirmed(gNendo, gKi);
+    } catch(err) {
+      document.getElementById('heroTitle').innerHTML =
+        `路竹高中 IoT 設備盤點`;
+      document.getElementById('unitsGrid').innerHTML =
+        `<div class="error-msg">⚠ 無法讀取資料：${err.message}</div>`;
+      console.error(err);
+    }
+  })();
+</script>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-info">
+        <div class="modal-unit-code" id="modalCode">—</div>
+        <div class="modal-title" id="modalName">處室名稱</div>
+        <div class="modal-subtitle">請確認資料是否正確 · 共 <strong id="modalRowCount">—</strong> 筆資料</div>
+      </div>
+      <button class="modal-close" id="modalCloseBtn" aria-label="關閉">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-loading"><span>讀取中…</span></div>
+    </div>
+    <div class="modal-foot">
+      <span class="modal-count-text" id="modalFootCount"></span>
+      <button class="btn-confirm" id="btnConfirm" disabled>掃碼確認簽名 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Modal logic ──
+  const IOT_SHEET = '物聯網IoT設備盤點調查表';
+  let iotCache = null; // 快取整張表資料
+  let currentModalUnit = {};
+
+  const backdrop  = document.getElementById('modalBackdrop');
+  const modalCode = document.getElementById('modalCode');
+  const modalName = document.getElementById('modalName');
+  const modalBody = document.getElementById('modalBody');
+  const modalRowCount = document.getElementById('modalRowCount');
+  const modalFootCount = document.getElementById('modalFootCount');
+  const btnConfirm = document.getElementById('btnConfirm');
+
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  function closeModal() {
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function getIotData() {
+    if (iotCache) return iotCache;
+    const res = await fetch(`${API_URL}?action=read&sheetName=${encodeURIComponent(IOT_SHEET)}`);
+    const json = await res.json();
+    if (json.status !== 'success') throw new Error(json.message);
+    iotCache = json.data; // array of row-objects
+    return iotCache;
+  }
+
+  async function openModal({ code, name, raw }) {
+    currentModalUnit = { code, name };
+    // 顯示 modal
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    modalCode.textContent = code || '—';
+    modalName.textContent = name;
+    modalRowCount.textContent = '讀取中';
+    modalFootCount.textContent = '';
+    btnConfirm.disabled = true;
+    modalBody.innerHTML = '<div class="modal-loading"><span>讀取中…</span></div>';
+
+    try {
+      const allRows = await getIotData();
+
+      // O欄（第15欄, index 14）作為處室 filter 欄位
+      const allKeys = allRows.length > 0 ? Object.keys(allRows[0]) : [];
+      const filterKey = allKeys[14]; // O欄
+
+      // 顯示欄位限 A~N（前14欄）
+      const headers = allKeys.slice(0, 14);
+
+      const filtered = allRows.filter(row => {
+        const val = (row[filterKey] || '').trim();
+        return val === raw ||
+               val.startsWith(code + '.') ||
+               val === name ||
+               (code && val.slice(0, 3) === code.slice(0, 3));
+      });
+
+      modalRowCount.textContent = filtered.length;
+      modalFootCount.textContent = `工作表：${IOT_SHEET}　共 ${filtered.length} 筆`;
+      btnConfirm.disabled = filtered.length === 0;
+
+      if (filtered.length === 0) {
+        modalBody.innerHTML = '<div class="modal-empty">⚠ 此處室目前無資料</div>';
+        return;
+      }
+
+      // 建表格（只顯示有值的 A~N 欄）
+      const usedHeaders = headers.filter(h => filtered.some(r => r[h] !== undefined && r[h] !== ''));
+
+      const thead = `<thead><tr>${usedHeaders.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+      const tbody = `<tbody>${filtered.map(row =>
+        `<tr>${usedHeaders.map(h => `<td title="${(row[h]||'').replace(/"/g,'&quot;')}">${row[h] ?? ''}</td>`).join('')}</tr>`
+      ).join('')}</tbody>`;
+
+      modalBody.innerHTML = `<table class="modal-table">${thead}${tbody}</table>`;
+    } catch(err) {
+      modalBody.innerHTML = `<div class="modal-empty" style="color:#dc2626">⚠ 讀取失敗：${err.message}</div>`;
+      modalRowCount.textContent = '錯誤';
+    }
+  }
+
+  btnConfirm.addEventListener('click', () => {
+    closeModal();
+    openQrModal(currentModalUnit);
+  });
+
+  // ── QR Modal ──
+  const qrBackdrop  = document.getElementById('qrBackdrop');
+  const qrUnitCodeEl = document.getElementById('qrUnitCode');
+  const qrUnitNameEl = document.getElementById('qrUnitName');
+  const qrUrlEl      = document.getElementById('qrUrl');
+
+  document.getElementById('qrCloseBtn').addEventListener('click', closeQrModal);
+  qrBackdrop.addEventListener('click', e => { if (e.target === qrBackdrop) closeQrModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQrModal(); });
+
+  function closeQrModal() { qrBackdrop.classList.remove('open'); }
+
+  function openQrModal({ code, name }) {
+    const url = `https://jackblack20250125.github.io/my-website/signature.html` +
+      `?unit=${encodeURIComponent(code)}&unitName=${encodeURIComponent(name)}` +
+      `&nendo=${encodeURIComponent(gNendo)}&ki=${encodeURIComponent(gKi)}`;
+
+    qrUnitCodeEl.textContent = code || '—';
+    qrUnitNameEl.textContent = name;
+    qrUrlEl.textContent      = url;
+
+    const canvas = document.getElementById('qrCanvas');
+    canvas.innerHTML = '';
+    new QRCode(canvas, {
+      text: url, width: 200, height: 200,
+      colorDark: '#1e3a5f', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    qrBackdrop.classList.add('open');
+  }
+
+  // ── 載入已確認清單並標色 ──
+  async function loadConfirmed(nendo, ki) {
+    try {
+      const res  = await fetch(`${API_URL}?action=readConfirmed&nendo=${encodeURIComponent(nendo)}&ki=${encodeURIComponent(ki)}`);
+      const json = await res.json();
+      if (json.status !== 'success') return;
+      const codes = new Set(json.data.map(r => (r['處室代碼'] || '').trim()));
+      document.querySelectorAll('.unit-card').forEach(card => {
+        if (codes.has(card.dataset.code)) {
+          card.classList.add('confirmed');
+          const st = card.querySelector('.unit-status');
+          if (st) st.innerHTML = '<span class="dot"></span> 已確認簽名';
+        }
+      });
+    } catch(e) { /* silent */ }
+  }
+</script>
+
+<!-- ══ QR MODAL ══ -->
+<div class="qr-backdrop" id="qrBackdrop">
+  <div class="qr-box">
+    <div class="modal-unit-code" id="qrUnitCode" style="margin-bottom:8px">—</div>
+    <div class="qr-box-title" id="qrUnitName">—</div>
+    <div class="qr-box-sub">請用手機掃描此 QR Code 進行簽名確認</div>
+    <div id="qrCanvas"></div>
+    <div class="qr-url" id="qrUrl"></div>
+    <button class="qr-close-btn" id="qrCloseBtn">關閉</button>
+  </div>
+</div>
+
+</body>
+</html>
