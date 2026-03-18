@@ -787,6 +787,55 @@
     .qr-close-btn:hover {
       opacity: .85;
     }
+
+    /* ── Slogans ── */
+    .hero-slogans {
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid var(--primary-light);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);
+      max-width: fit-content;
+      animation: fadeUp 0.6s ease both;
+      animation-delay: 0.2s;
+    }
+
+    .slogan-icon {
+      width: 22px;
+      height: 22px;
+      color: var(--accent);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .slogan-text {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      letter-spacing: 0.05em;
+      min-width: 260px;
+    }
+
+    .slogan-text.fade-out {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    
+    .slogan-text.fade-in {
+      opacity: 0;
+      transform: translateY(8px);
+    }
   </style>
 </head>
 
@@ -803,6 +852,13 @@
       </h1>
       <div class="hero-meta" id="heroMeta">
         <!-- 動態填入 -->
+      </div>
+      
+      <div class="hero-slogans">
+        <svg class="slogan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <div class="slogan-text" id="sloganText">建立資安防線，從日常習慣開始</div>
       </div>
     </div>
     <div class="hero-deco">IoT</div>
@@ -843,6 +899,53 @@
 
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyBc_yAr1zWzBuWTPZGAwWRKfNqTqyMZZ47nbFzUQPuaCzLIUsFVO72_1EdwSOi0oU1EQ/exec';
+
+    const slogans = [
+      "建立資安防線，從日常習慣開始",
+      "落實最小權限原則，降低資安風險",
+      "強化帳號管理，杜絕未授權存取",
+      "定期更新與備份，是資安基本功",
+      "社交工程無孔不入，提高警覺是關鍵",
+      "資安做得好，個資沒煩惱",
+      "一人疏忽，全校受苦",
+      "網路世界陷阱多，資安意識不可少",
+      "點擊之前多思考，資安風險少一半",
+      "資安不是IT的事，是每個人的責任",
+      "帳密不共用，責任不外流",
+      "公務資料不外傳，資安守門第一關",
+      "USB隨插有風險，先掃毒再使用",
+      "離開電腦要鎖定，資安習慣要養成",
+      "郵件附件不亂開，釣魚信件要小心",
+      "平板也是電腦，資安一樣重要",
+      "不下載來路不明APP",
+      "公用設備記得登出帳號",
+      "校園Wi-Fi安全用，敏感操作要避免",
+      "更新系統不拖延，漏洞不留機會",
+      "「不明連結，不要點！」",
+      "「帳密外洩，一切重來！」",
+      "「離開電腦，記得鎖！」",
+      "「免費最貴，小心詐騙！」",
+      "「資安從你我做起！」"
+    ];
+    let sloganIndex = 0;
+    setInterval(() => {
+      const textEl = document.getElementById('sloganText');
+      if (textEl) {
+        textEl.classList.add('fade-out');
+        setTimeout(() => {
+          sloganIndex = (sloganIndex + 1) % slogans.length;
+          textEl.textContent = slogans[sloganIndex];
+          textEl.classList.remove('fade-out');
+          textEl.classList.add('fade-in');
+          
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              textEl.classList.remove('fade-in');
+            });
+          });
+        }, 400);
+      }
+    }, 4500);
 
     let gNendo = '115', gKi = '1';
     document.getElementById('footerYear').textContent = new Date().getFullYear();
