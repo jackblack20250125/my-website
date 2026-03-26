@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主機財產管理系統</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #0a0a0f;
+            --bg-panel: #14141d;
+            --bg-card: #1c1c28;
+            --accent-glow: #00f0ff;
+            --accent-dim: rgba(0, 240, 255, 0.2);
+            --text-main: #e2e8f0;
+            --text-muted: #8b949e;
+            --danger: #ff3366;
+            --success: #33ff99;
+            --border: #2d3748;
+            --border-glow: #00f0ff;
+            
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(51, 255, 153, 0.05), transparent 25%);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar / Header */
+        header {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px var(--accent-glow);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            fill: none;
+            stroke: var(--accent-glow);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Layout */
+        main {
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Controls Area */
+        .controls-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Search Box */
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 1.2rem 1.5rem 1.2rem 3rem;
+            border-radius: var(--radius-lg);
+            font-size: 1.1rem;
+            font-family: inherit;
+            transition: var(--transition);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--border-glow);
+            box-shadow: 0 0 20px var(--accent-dim), inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            fill: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .search-input:focus + .search-icon,
+        .search-input:not(:placeholder-shown) + .search-icon {
+            fill: var(--accent-glow);
+            filter: drop-shadow(0 0 5px var(--accent-glow));
+        }
+
+        /* Buttons */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--bg-panel);
+            border-color: #5d6778;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(0,240,255,0));
+            border-color: var(--accent-glow);
+            color: var(--accent-glow);
+            box-shadow: 0 0 15px var(--accent-dim);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-glow);
+            color: #000;
+            box-shadow: 0 0 20px var(--accent-glow);
+            text-shadow: none;
+        }
+
+        /* Status & Empty state */
+        .status-message {
+            margin-top: 1rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+            min-height: 24px;
+        }
+
+        .not-found-area {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+            background: rgba(255, 51, 102, 0.05);
+            border-left: 4px solid var(--danger);
+            padding: 1.5rem;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .not-found-text {
+            color: var(--danger);
+            font-weight: 500;
+        }
+
+        /* Data Grid */
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .data-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+        }
+
+        .data-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-glow);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: var(--border-glow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .card-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-val {
+            font-size: 1rem;
+            color: var(--text-main);
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        /* Modal Form */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(30px) scale(0.95);
+            transition: var(--transition);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(0, 240, 255, 0.1);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .modal-title::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-close:hover {
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--success);
+            box-shadow: 0 0 10px rgba(51, 255, 153, 0.2);
+            background: #1f1f2e;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Loading */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin: 2rem auto;
+            display: none;
+        }
+        .loader::after {
+            content: '';  
+            box-sizing: border-box;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid;
+            border-color: var(--accent-glow) transparent;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar track */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-dim);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="M10 4v16"></path>
+                <path d="M14 4v16"></path>
+                <circle cx="6" cy="12" r="1" fill="currentColor"></circle>
+                <circle cx="18" cy="12" r="1" fill="currentColor"></circle>
+            </svg>
+            HOST:PROPERTY_MGMT
+        </div>
+        <a href="index.html" class="btn">返回首頁</a>
+    </header>
+
+    <main>
+        <div class="controls-area">
+            <div style="flex:1;">
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="掃描或輸入財產標籤..." autocomplete="off">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="status-message" id="statusMessage">系統初始化中，請稍候...</div>
+                
+                <div class="not-found-area" id="notFoundArea">
+                    <div class="not-found-text">
+                        <svg viewBox="0 0 24 24" width="20" height="20" style="display:inline; vertical-align:text-bottom; margin-right:4px;">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        查無此財產標籤資料
+                    </div>
+                    <button id="btnOpenAddForm" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v16m8-8H4"/></svg>
+                        新增財產
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <span class="loader" id="loader"></span>
+        <div class="results-container" id="resultsContainer">
+            <!-- Data Cards will be injected here -->
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title">新增主機財產登記</div>
+                <button class="btn-close" id="btnCloseModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm" class="form-grid">
+                    
+                    <div class="form-group">
+                        <label class="form-label">財產標籤</label>
+                        <input type="text" class="form-control" id="f_label" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">異動日期或登記追蹤日期</label>
+                        <input type="date" class="form-control" id="f_date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">電腦年分</label>
+                        <input type="text" list="dl_year" class="form-control" id="f_year">
+                        <datalist id="dl_year"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">狀況</label>
+                        <input type="text" list="dl_status" class="form-control" id="f_status">
+                        <datalist id="dl_status"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">型號</label>
+                        <input type="text" list="dl_model" class="form-control" id="f_model">
+                        <datalist id="dl_model"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">其他</label>
+                        <input type="text" list="dl_other" class="form-control" id="f_other">
+                        <datalist id="dl_other"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">新保管人</label>
+                        <input type="text" list="dl_newkeeper" class="form-control" id="f_newkeeper">
+                        <datalist id="dl_newkeeper"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">新位置</label>
+                        <input type="text" list="dl_newloc" class="form-control" id="f_newloc">
+                        <datalist id="dl_newloc"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">原保管人</label>
+                        <input type="text" list="dl_oldkeeper" class="form-control" id="f_oldkeeper">
+                        <datalist id="dl_oldkeeper"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">原使用處室或位置</label>
+                        <input type="text" list="dl_oldloc" class="form-control" id="f_oldloc">
+                        <datalist id="dl_oldloc"></datalist>
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">備註1</label>
+                        <input type="text" class="form-control" id="f_note1">
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">備註2</label>
+                        <input type="text" class="form-control" id="f_note2">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" id="btnCancelModal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitForm">儲存資料</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID = '1qg3nYreVGnIejBpkoZPVb-7PvEjpqAZuVowjnvBHvy8';
+        const SHEET_NAME = '工作表1';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+        let globalData = [];
+        let uniqueValues = {}; 
+
+        const searchInput = document.getElementById('searchInput');
+        const loader = document.getElementById('loader');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const notFoundArea = document.getElementById('notFoundArea');
+        
+        // Modal elements
+        const addModal = document.getElementById('addModal');
+        const btnOpenAddForm = document.getElementById('btnOpenAddForm');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const btnCancelModal = document.getElementById('btnCancelModal');
+        const btnSubmitForm = document.getElementById('btnSubmitForm');
+
+        // Fields mapping
+        const fieldsToExtract = [
+            '電腦年分', '狀況', '型號', '其他', 
+            '新保管人', '新位置', '原保管人', '原使用處室或位置'
+        ];
+        
+        const datalistMap = {
+            '電腦年分': 'dl_year',
+            '狀況': 'dl_status',
+            '型號': 'dl_model',
+            '其他': 'dl_other',
+            '新保管人': 'dl_newkeeper',
+            '新位置': 'dl_newloc',
+            '原保管人': 'dl_oldkeeper',
+            '原使用處室或位置': 'dl_oldloc'
+        };
+
+        async function init() {
+            loader.style.display = 'block';
+            statusMessage.textContent = '讀取 Google 試算表資料中...';
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        globalData = results.data;
+                        loader.style.display = 'none';
+                        statusMessage.textContent = `已成功載入資料（共 ${globalData.length} 筆）。輸入上方財產標籤進行查詢。`;
+                        
+                        extractUniqueValues();
+                        populateDatalists();
+                        
+                        searchInput.focus();
+                    },
+                    error: function(err) {
+                        statusMessage.textContent = '資料載入失敗: ' + err.message;
+                        loader.style.display = 'none';
+                    }
+                });
+            } catch (error) {
+                statusMessage.textContent = '無法連線至資料庫或試算表尚未公開。請確認試算表分享權限。';
+                loader.style.display = 'none';
+                console.error(error);
+            }
+        }
+
+        function extractUniqueValues() {
+            fieldsToExtract.forEach(field => {
+                uniqueValues[field] = new Set();
+            });
+
+            globalData.forEach(row => {
+                fieldsToExtract.forEach(field => {
+                    if (row[field] && row[field].trim() !== '') {
+                        uniqueValues[field].add(row[field].trim());
+                    }
+                });
+            });
+        }
+
+        function populateDatalists() {
+            fieldsToExtract.forEach(field => {
+                const dl_id = datalistMap[field];
+                const dl = document.getElementById(dl_id);
+                if(dl) {
+                    dl.innerHTML = '';
+                    const sortedVals = Array.from(uniqueValues[field]).sort();
+                    sortedVals.forEach(val => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        dl.appendChild(opt);
+                    });
+                }
+            });
+        }
+
+        function renderCards(records) {
+            resultsContainer.innerHTML = '';
+            
+            records.forEach((record, index) => {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                const propLabel = record['財產標籤'] || '-';
+                const dateVal = record['異動日期或登記追蹤日期'] || record['異動日期'] || '-';
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title">${propLabel}</div>
+                        <div class="card-date">${dateVal}</div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">狀況</span>
+                            <span class="info-val">${record['狀況'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">電腦年分</span>
+                            <span class="info-val">${record['電腦年分'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">型號</span>
+                            <span class="info-val">${record['型號'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">其他</span>
+                            <span class="info-val">${record['其他'] || '-'}</span>
+                        </div>
+                        
+                        <div class="info-item" style="margin-top:0.8rem;">
+                            <span class="info-label text-success">新保管人</span>
+                            <span class="info-val" style="color:var(--success);">${record['新保管人'] || '-'}</span>
+                        </div>
+                        <div class="info-item" style="margin-top:0.8rem;">
+                            <span class="info-label text-success">新位置</span>
+                            <span class="info-val">${record['新位置'] || '-'}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">原保管人</span>
+                            <span class="info-val" style="opacity:0.7;">${record['原保管人'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">原使用處室或位置</span>
+                            <span class="info-val" style="opacity:0.7;">${record['原使用處室或位置'] || '-'}</span>
+                        </div>
+
+                        ${record['備註1'] ? `
+                        <div class="info-item full-width" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border);">
+                            <span class="info-label">備註1</span>
+                            <span class="info-val">${record['備註1']}</span>
+                        </div>` : ''}
+                        ${record['備註2'] ? `
+                        <div class="info-item full-width">
+                            <span class="info-label">備註2</span>
+                            <span class="info-val">${record['備註2']}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        function handleSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            
+            if (query === '') {
+                resultsContainer.innerHTML = '';
+                notFoundArea.style.display = 'none';
+                return;
+            }
+
+            const matches = globalData.filter(row => {
+                const label = (row['財產標籤'] || '').toLowerCase();
+                return label.includes(query);
+            });
+
+            if (matches.length > 0) {
+                notFoundArea.style.display = 'none';
+                renderCards(matches);
+            } else {
+                resultsContainer.innerHTML = '';
+                notFoundArea.style.display = 'flex';
+                
+                // set default labal value on not found
+                const rawVal = searchInput.value.trim();
+                let defLabel = '314010103-';
+                if(rawVal.startsWith('314010103-')) {
+                    defLabel = rawVal;
+                } else if(rawVal.length > 0) {
+                    defLabel = '314010103-' + rawVal;
+                }
+                document.getElementById('f_label').value = defLabel;
+            }
+        }
+
+        searchInput.addEventListener('input', handleSearch);
+
+        // Modal Logic
+        function openModal() {
+            addModal.classList.add('active');
+            
+            // Set Today's Date correctly synced to local timezone
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
+            const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 10);
+            document.getElementById('f_date').value = localISOTime;
+            
+            if(document.getElementById('f_label').value === '') {
+                document.getElementById('f_label').value = '314010103-';
+            }
+        }
+
+        function closeModal() {
+            addModal.classList.remove('active');
+        }
+
+        btnOpenAddForm.addEventListener('click', openModal);
+        btnCloseModal.addEventListener('click', closeModal);
+        btnCancelModal.addEventListener('click', closeModal);
+        
+        addModal.addEventListener('click', (e) => {
+            if (e.target === addModal) closeModal();
+        });
+
+        btnSubmitForm.addEventListener('click', () => {
+             // Validate requirement
+             const labelVal = document.getElementById('f_label').value;
+             if(!labelVal) {
+                 alert('請輸入財產標籤');
+                 return;
+             }
+             
+             // In real world, this would submit to Google App Script using fetch POST.
+             alert('表單已模擬送出！此處需串接 Google Apps Script 才能執行真正的寫入。\n您填寫的財產標籤：' + labelVal);
+             closeModal();
+             searchInput.value = '';
+             handleSearch();
+        });
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
