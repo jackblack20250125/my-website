@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>路竹高中居家載具借用系統</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;600;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     :root {
       --primary: #4F46E5;
@@ -19,304 +23,661 @@
       --card-bg: rgba(255, 255, 255, 0.75);
       --glass-border: rgba(255, 255, 255, 0.5);
     }
-    body { 
+
+    body {
       background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-      padding-bottom: 120px; 
-      font-family: 'Inter', 'Noto Sans TC', sans-serif; 
+      padding-bottom: 120px;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
       min-height: 100vh;
       color: #1F2937;
     }
-    
-    /* 玻璃擬態背景裝飾 */
-    .bg-shape1 { position: fixed; top: -100px; right: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: -1; }
-    .bg-shape2 { position: fixed; bottom: -150px; left: -150px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: -1; }
 
-    .container { max-width: 960px; position: relative; z-index: 10; padding-top: 45px; }
+    /* 玻璃擬態背景裝飾 */
+    .bg-shape1 {
+      position: fixed;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .bg-shape2 {
+      position: fixed;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 960px;
+      position: relative;
+      z-index: 10;
+      padding-top: 45px;
+    }
 
     /* --- 頂部排版 --- */
-    .header-section { text-align: center; margin-bottom: 40px; animation: fadeInDown 0.8s ease; }
-    h2 { font-weight: 800; color: #111827; margin-bottom: 8px; letter-spacing: -1px; font-size: 2.3rem; }
-    .sub-title { color: #6B7280; font-size: 1.05rem; }
+    .header-section {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    h2 {
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+      font-size: 2.3rem;
+    }
+
+    .sub-title {
+      color: #6B7280;
+      font-size: 1.05rem;
+    }
 
     /* --- 重新整理按鈕 --- */
     .btn-refresh {
-      background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px);
-      border: 1px solid var(--glass-border); color: var(--primary);
-      padding: 10px 24px; font-size: 15px; font-weight: 600;
-      border-radius: 50px; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      color: var(--primary);
+      padding: 10px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-top: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+      margin-top: 15px;
     }
-    .btn-refresh:hover { transform: translateY(-2px); box-shadow: 0 10px 15px rgba(0,0,0,0.08); background: #fff; }
-    .btn-refresh:active { transform: scale(0.96); }
-    .spin { animation: rotate 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
-    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .btn-refresh:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+      background: #fff;
+    }
+
+    .btn-refresh:active {
+      transform: scale(0.96);
+    }
+
+    .spin {
+      animation: rotate 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     /* --- 設備卡片 --- */
     .device-card {
-      height: 140px; border-radius: 20px; cursor: pointer; 
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: var(--card-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      height: 140px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--glass-border);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.03); 
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative; overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
-    .col-animate { animation: fadeInUp 0.5s ease backwards; }
+
+    .col-animate {
+      animation: fadeInUp 0.5s ease backwards;
+    }
+
     .device-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; transition: 0.3s;
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      transition: 0.3s;
     }
-    
-    .status-available::before { background: var(--secondary); }
-    .status-available { color: #065F46; }
-    .status-available .device-info { background: #D1FAE5; color: #065F46; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
 
-    .status-inuse::before { background: var(--danger); }
-    .status-inuse { color: #991B1B; }
-    .status-inuse .device-info { background: #FEE2E2; color: #991B1B; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
-
-    .status-other::before { background: #9CA3AF; }
-    .status-other { color: #4B5563; opacity: 0.7; pointer-events: none; filter: grayscale(100%); }
-    .status-other .device-info { background: #F3F4F6; color: #4B5563; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
-    
-    .device-card:hover:not(.status-other) { 
-      transform: translateY(-5px); 
-      box-shadow: 0 15px 30px rgba(0,0,0,0.08); 
+    .status-available::before {
+      background: var(--secondary);
     }
-    .selected { 
-      border: 2px solid var(--primary) !important; 
+
+    .status-available {
+      color: #065F46;
+    }
+
+    .status-available .device-info {
+      background: #D1FAE5;
+      color: #065F46;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-inuse::before {
+      background: var(--danger);
+    }
+
+    .status-inuse {
+      color: #991B1B;
+    }
+
+    .status-inuse .device-info {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-other::before {
+      background: #9CA3AF;
+    }
+
+    .status-other {
+      color: #4B5563;
+      opacity: 0.7;
+      pointer-events: none;
+      filter: grayscale(100%);
+    }
+
+    .status-other .device-info {
+      background: #F3F4F6;
+      color: #4B5563;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .device-card:hover:not(.status-other) {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .selected {
+      border: 2px solid var(--primary) !important;
       background: #EEF2FF !important;
-      transform: translateY(-5px); 
-      box-shadow: 0 15px 30px rgba(79, 70, 229, 0.2) !important; 
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(79, 70, 229, 0.2) !important;
     }
-    .selected::before { background: var(--primary); }
-    
-    .device-id { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+    .selected::before {
+      background: var(--primary);
+    }
+
+    .device-id {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
 
     /* --- 骨架屏 --- */
     .skeleton-card {
-      height: 140px; border-radius: 20px; background: rgba(255,255,255,0.6); 
-      border: 1px dashed rgba(0,0,0,0.1); display: flex; flex-direction: column; 
-      justify-content: center; align-items: center; padding: 15px; cursor: wait;
+      height: 140px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px dashed rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      cursor: wait;
     }
-    .skeleton-text { border-radius: 8px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .skeleton-text {
+      border-radius: 8px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
 
     /* --- 底部懸浮列 --- */
-    .bottom-bar { 
-      position: fixed; bottom: 0; left: 0; right: 0; 
-      background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      padding: 20px; border-top: 1px solid rgba(255,255,255,0.5); 
-      z-index: 1050; box-shadow: 0 -10px 30px rgba(0,0,0,0.06); 
-      transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.5);
+      z-index: 1050;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.06);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .bottom-bar.show { transform: translateY(0); }
-    
+
+    .bottom-bar.show {
+      transform: translateY(0);
+    }
+
     .btn-action {
-      background: linear-gradient(135deg, var(--primary), #6366F1); color: white;
-      border: none; padding: 12px 30px; font-weight: 800; font-size: 1.15rem;
-      border-radius: 50px; box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+      background: linear-gradient(135deg, var(--primary), #6366F1);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      border-radius: 50px;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
       transition: all 0.3s;
     }
-    .btn-action:hover { box-shadow: 0 12px 25px rgba(79, 70, 229, 0.4); transform: translateY(-2px); color: white; }
+
+    .btn-action:hover {
+      box-shadow: 0 12px 25px rgba(79, 70, 229, 0.4);
+      transform: translateY(-2px);
+      color: white;
+    }
 
     /* --- 彈出視窗 --- */
-    .modal-content { border-radius: 24px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
-    .modal-header { border-bottom: none; padding: 24px 24px 10px; }
-    .modal-title { font-weight: 800; color: #111827; }
-    .modal-body { padding: 0 24px 24px; }
-    .modal-footer { border-top: 1px solid #F3F4F6; padding: 20px 24px; }
+    .modal-content {
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
 
-    .role-switch { background: #F3F4F6; border-radius: 14px; padding: 6px; display: flex; margin-bottom: 24px; }
-    .role-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: #6B7280; background: transparent; transition: all 0.3s; }
-    .role-btn.active { background: #fff; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-    
-    .form-label { font-size: 0.9rem; font-weight: 700; color: #4B5563; margin-bottom: 8px; }
-    .form-control, .form-select { border-radius: 14px; border: 2px solid transparent; padding: 14px 18px; background: #F3F4F6; transition: 0.3s; font-weight: 500; font-size: 1rem; }
-    .form-control:focus, .form-select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); outline: none; }
+    .modal-header {
+      border-bottom: none;
+      padding: 24px 24px 10px;
+    }
 
-    #signature-pad-container { border: 2px dashed #D1D5DB; background: #fff; height: 220px; border-radius: 16px; overflow: hidden; position: relative; transition: 0.3s; }
-    #signature-pad-container:hover { border-color: var(--primary); }
-    canvas { width: 100%; height: 100%; touch-action: none; }
-    .clear-btn { position: absolute; top: 12px; right: 12px; background: rgba(243, 244, 246, 0.9); border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #4B5563; z-index: 10; backdrop-filter: blur(4px); transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .clear-btn:hover { background: #E5E7EB; color: #111827; }
+    .modal-title {
+      font-weight: 800;
+      color: #111827;
+    }
 
-    .custom-switch { display: flex; justify-content: space-between; align-items: center; background: #F9FAFB; padding: 16px; border-radius: 14px; border: 1px solid #E5E7EB; }
-    .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
-    
-    .sync-status { display: inline-flex; align-items: center; font-size: 0.85rem; color: #6B7280; gap: 6px; margin-top: 10px; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; }
-    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); display: inline-block; }
-    .syncing .sync-dot { background: #F59E0B; animation: pulse 1s infinite alternate; }
-    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+    .modal-body {
+      padding: 0 24px 24px;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #F3F4F6;
+      padding: 20px 24px;
+    }
+
+    .role-switch {
+      background: #F3F4F6;
+      border-radius: 14px;
+      padding: 6px;
+      display: flex;
+      margin-bottom: 24px;
+    }
+
+    .role-btn {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      color: #6B7280;
+      background: transparent;
+      transition: all 0.3s;
+    }
+
+    .role-btn.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #4B5563;
+      margin-bottom: 8px;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 14px;
+      border: 2px solid transparent;
+      padding: 14px 18px;
+      background: #F3F4F6;
+      transition: 0.3s;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+      outline: none;
+    }
+
+    #signature-pad-container {
+      border: 2px dashed #D1D5DB;
+      background: #fff;
+      height: 220px;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      transition: 0.3s;
+    }
+
+    #signature-pad-container:hover {
+      border-color: var(--primary);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .clear-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(243, 244, 246, 0.9);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #4B5563;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      transition: 0.2s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .clear-btn:hover {
+      background: #E5E7EB;
+      color: #111827;
+    }
+
+    .custom-switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #F9FAFB;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .sync-status {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #6B7280;
+      gap: 6px;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--secondary);
+      display: inline-block;
+    }
+
+    .syncing .sync-dot {
+      background: #F59E0B;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        opacity: 0.4;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-<div class="bg-shape1"></div>
-<div class="bg-shape2"></div>
+  <div class="bg-shape1"></div>
+  <div class="bg-shape2"></div>
 
-<div class="container">
-  <div class="header-section">
-    <h2>路竹高中居家載具借用</h2>
-    <p class="sub-title">請點選載具進行批量借用或歸還</p>
-    
-    <div>
-      <button id="refresh-btn" class="btn-refresh" onclick="handleRefreshClick()">
-        <i id="btn-icon" class="bi bi-arrow-clockwise"></i>
-        <span id="btn-text">重新同步</span>
+  <div class="container">
+    <div class="header-section">
+      <h2>路竹高中居家載具借用</h2>
+      <p class="sub-title">請點選載具進行批量借用或歸還</p>
+
+      <div>
+        <button id="refresh-btn" class="btn-refresh" onclick="handleRefreshClick()">
+          <i id="btn-icon" class="bi bi-arrow-clockwise"></i>
+          <span id="btn-text">重新同步</span>
+        </button>
+      </div>
+      <div id="sync-status" class="sync-status" style="display: none;">
+        <span class="sync-dot"></span> <span id="sync-text">已更新至最新狀態</span>
+      </div>
+    </div>
+
+    <div id="grid-container" class="row g-4">
+      <!-- Cards will go here -->
+    </div>
+  </div>
+
+  <div class="bottom-bar" id="bottomBar">
+    <div class="d-flex justify-content-between align-items-center container py-0">
+      <span class="fs-4 fw-bold text-dark">已選取 <span id="selectedCount" style="color: var(--primary);">0</span> 台</span>
+      <button class="btn-action" onclick="openBatchModal()">
+        下一步：填寫資料 <i class="bi bi-arrow-right fw-bold ms-1"></i>
       </button>
     </div>
-    <div id="sync-status" class="sync-status" style="display: none;">
-      <span class="sync-dot"></span> <span id="sync-text">已更新至最新狀態</span>
-    </div>
   </div>
-  
-  <div id="grid-container" class="row g-4">
-    <!-- Cards will go here -->
-  </div>
-</div>
 
-<div class="bottom-bar" id="bottomBar">
-  <div class="d-flex justify-content-between align-items-center container py-0">
-    <span class="fs-4 fw-bold text-dark">已選取 <span id="selectedCount" style="color: var(--primary);">0</span> 台</span>
-    <button class="btn-action" onclick="openBatchModal()">
-      下一步：填寫資料 <i class="bi bi-arrow-right fw-bold ms-1"></i>
-    </button>
-  </div>
-</div>
-
-<div class="modal fade" id="actionModal" data-bs-backdrop="static" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header d-flex justify-content-between">
-        <h5 class="modal-title fs-4"><span id="modalActionTitle">批量處理</span></h5>
-        <button type="button" class="btn-close fs-5" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body pt-3">
-        
-        <div class="role-switch" id="roleToggleArea">
-          <button class="role-btn active" id="btnFaculty" onclick="setRole('Faculty')"><i class="bi bi-person-workspace me-1"></i> 教職員</button>
-          <button class="role-btn" id="btnStudent" onclick="setRole('Student')"><i class="bi bi-mortarboard-fill me-1"></i> 學生</button>
+  <div class="modal fade" id="actionModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header d-flex justify-content-between">
+          <h5 class="modal-title fs-4"><span id="modalActionTitle">批量處理</span></h5>
+          <button type="button" class="btn-close fs-5" data-bs-dismiss="modal"></button>
         </div>
-        
-        <div id="facultyInputArea" class="mb-4">
-          <label class="form-label" id="nameLabel">教職員姓名</label>
-          <input type="text" id="facultyName" class="form-control" placeholder="請輸入您的姓名">
-        </div>
+        <div class="modal-body pt-3">
 
-        <div id="studentInputArea" class="mb-4" style="display:none;">
-          <div class="row g-3">
-            <div class="col-6">
-              <label class="form-label">學制</label>
-              <select id="selSystem" class="form-select" onchange="updateClassList()">
-                <option value="高中部">高中部</option>
-                <option value="國中部">國中部</option>
-              </select>
+          <div class="role-switch" id="roleToggleArea">
+            <button class="role-btn active" id="btnFaculty" onclick="setRole('Faculty')"><i
+                class="bi bi-person-workspace me-1"></i> 教職員</button>
+            <button class="role-btn" id="btnStudent" onclick="setRole('Student')"><i
+                class="bi bi-mortarboard-fill me-1"></i> 學生</button>
+          </div>
+
+          <div id="facultyInputArea" class="mb-4">
+            <label class="form-label" id="nameLabel">教職員姓名</label>
+            <input type="text" id="facultyName" class="form-control" placeholder="請輸入您的姓名">
+          </div>
+
+          <div id="studentInputArea" class="mb-4" style="display:none;">
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label">學制</label>
+                <select id="selSystem" class="form-select" onchange="updateClassList()">
+                  <option value="高中部">高中部</option>
+                  <option value="國中部">國中部</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">班級</label>
+                <select id="selClass" class="form-select"></select>
+              </div>
             </div>
-            <div class="col-6">
-              <label class="form-label">班級</label>
-              <select id="selClass" class="form-select"></select>
+            <div class="mt-3">
+              <label class="form-label">座號</label>
+              <select id="selSeat" class="form-select"></select>
             </div>
           </div>
-          <div class="mt-3">
-            <label class="form-label">座號</label>
-            <select id="selSeat" class="form-select"></select>
+
+          <div class="mb-4" id="reasonArea">
+            <label class="form-label">借用原因</label>
+            <select id="borrowReason" class="form-select">
+              <option value="教學用">教學用</option>
+              <option value="報讀用">報讀用</option>
+              <option value="同學請假(混成教學)">同學請假(混成教學)</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div class="custom-switch mb-3">
+            <label class="form-label mb-0 fs-6"><i class="bi bi-plug-fill text-primary"></i> 包含電源線</label>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input fs-4 m-0" type="checkbox" id="powerCable" checked>
+            </div>
+          </div>
+          <div class="mb-4">
+            <input type="text" id="note" class="form-control" placeholder="備註 (例如：含延長線)">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">電子簽名</label>
+            <div id="signature-pad-container">
+              <button class="clear-btn" onclick="signaturePad.clear()"><i class="bi bi-eraser-fill"></i> 清除重簽</button>
+              <canvas id="signature-canvas"></canvas>
+            </div>
           </div>
         </div>
-        
-        <div class="mb-4" id="reasonArea">
-          <label class="form-label">借用原因</label>
-          <select id="borrowReason" class="form-select">
-            <option value="教學用">教學用</option>
-            <option value="報讀用">報讀用</option>
-            <option value="同學請假(混成教學)">同學請假(混成教學)</option>
-            <option value="其他">其他</option>
-          </select>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-action w-100 py-3" id="submitBtn" onclick="submitBatch()">確認提交</button>
         </div>
-        
-        <div class="custom-switch mb-3">
-           <label class="form-label mb-0 fs-6"><i class="bi bi-plug-fill text-primary"></i> 包含電源線</label>
-           <div class="form-check form-switch m-0">
-             <input class="form-check-input fs-4 m-0" type="checkbox" id="powerCable" checked>
-           </div>
-        </div>
-        <div class="mb-4">
-           <input type="text" id="note" class="form-control" placeholder="備註 (例如：含延長線)">
-        </div>
-        
-        <div class="mb-2">
-          <label class="form-label">電子簽名</label>
-          <div id="signature-pad-container">
-            <button class="clear-btn" onclick="signaturePad.clear()"><i class="bi bi-eraser-fill"></i> 清除重簽</button>
-            <canvas id="signature-canvas"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-action w-100 py-3" id="submitBtn" onclick="submitBatch()">確認提交</button>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-  // ==========================================
-  // GAS Web App 網址
-  // ==========================================
-  const API_URL = "https://script.google.com/macros/s/AKfycbxAWulpRiVMiwYUSj5IFpc-9jctUAqoaylK6p7B9JZU7CgubeZiIugjIAfttoAAn7yq/exec";
+  <script>
+    // ==========================================
+    // GAS Web App 網址 (負責寫入資料)
+    // ==========================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbxAWulpRiVMiwYUSj5IFpc-9jctUAqoaylK6p7B9JZU7CgubeZiIugjIAfttoAAn7yq/exec";
 
-  let signaturePad;
-  let actionModal;
-  let selectedDevices = [];
-  let currentRole = 'Faculty';
+    // ==========================================
+    // CSV 讀取設定 (負責讀取資料，速度極快)
+    // TODO: 請務必替換為你實際的試算表 ID 和 工作表名稱
+    // 記得要將該試算表共用設定為「知道連結的人皆可查看」
+    // ==========================================
+    const SHEET_ID = '1BxH3kGUOz4xVTn4ulpFWLM7imFIhR-GOqkco9TPD55I'; // 範例: 1qg3nYreVGnIejBpkoZPVb-7PvEjpqAZuVowjnvBHvy8
+    const SHEET_NAME = 'DeviceStatus'; // 範例: 工作表1 或者 表單回應 1
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQADvk10D1IrFWh0IB5UjhBy9nRgCtVwQ8_g3TV86-N2FN5DoLF9Zej1PHeyI9T2gQXf4KHVi_Quil1/pub?gid=0&single=true&output=csv`;
 
-  const SCHOOL_DATA = {
-    "高中部": [
-      { start: 401, end: 407 },
-      { start: 501, end: 507 },
-      { start: 601, end: 607 }
-    ],
-    "國中部": [
-      { start: 101, end: 111 },
-      { start: 201, end: 212 },
-      { start: 301, end: 311 }
-    ]
-  };
+    let signaturePad;
+    let actionModal;
+    let selectedDevices = [];
+    let currentRole = 'Faculty';
 
-  window.onload = () => {
-    actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
-    signaturePad = new SignaturePad(document.getElementById('signature-canvas'), {
+    const SCHOOL_DATA = {
+      "高中部": [
+        { start: 401, end: 407 },
+        { start: 501, end: 507 },
+        { start: 601, end: 607 }
+      ],
+      "國中部": [
+        { start: 101, end: 111 },
+        { start: 201, end: 212 },
+        { start: 301, end: 311 }
+      ]
+    };
+
+    window.onload = () => {
+      actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+      signaturePad = new SignaturePad(document.getElementById('signature-canvas'), {
         minWidth: 1.5, maxWidth: 3.5, penColor: "#000"
-    });
-    document.getElementById('actionModal').addEventListener('shown.bs.modal', resizeCanvas);
-    
-    initStudentData(); 
-    loadDevices();     
-  };
-
-  async function callApi(action, data = {}) {
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: action, ...data })
       });
-      return await response.json();
-    } catch (e) {
-      console.error("API Error:", e);
-      Swal.fire('連線錯誤', '無法連接到伺服器', 'error');
-      throw e;
-    }
-  }
+      document.getElementById('actionModal').addEventListener('shown.bs.modal', resizeCanvas);
 
-  function renderSkeleton() {
-    const container = document.getElementById('grid-container');
-    let html = '';
-    for(let i=0; i<12; i++) {
+      initStudentData();
+      loadDevices();
+    };
+
+    async function callApi(action, data = {}) {
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: action, ...data })
+        });
+        return await response.json();
+      } catch (e) {
+        console.error("API Error:", e);
+        Swal.fire('連線錯誤', '無法連接到伺服器', 'error');
+        throw e;
+      }
+    }
+
+    function renderSkeleton() {
+      const container = document.getElementById('grid-container');
+      let html = '';
+      for (let i = 0; i < 12; i++) {
         html += `
-        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i*0.05}s">
+        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i * 0.05}s">
           <div class="skeleton-card" aria-hidden="true">
              <div class="w-100 text-center">
                 <div class="skeleton-text mx-auto mb-3" style="width: 70%; height:32px;"></div>
@@ -324,243 +685,285 @@
              </div>
           </div>
         </div>`;
+      }
+      container.innerHTML = html;
     }
-    container.innerHTML = html;
-  }
 
-  function handleRefreshClick() {
-    loadDevices(true);
-  }
+    function handleRefreshClick() {
+      loadDevices(true);
+    }
 
-  function loadDevices(forceRefresh = false) {
-    selectedDevices = [];
-    document.getElementById('bottomBar').classList.remove('show');
-    
-    const cachedData = localStorage.getItem('devicesCache');
-    const syncStatus = document.getElementById('sync-status');
-    const syncText = document.getElementById('sync-text');
-    
-    // Cache-first 邏輯
-    if (cachedData && !forceRefresh) {
+    function loadDevices(forceRefresh = false) {
+      selectedDevices = [];
+      document.getElementById('bottomBar').classList.remove('show');
+
+      const cachedData = localStorage.getItem('devicesCache');
+      const syncStatus = document.getElementById('sync-status');
+      const syncText = document.getElementById('sync-text');
+
+      // Cache-first 邏輯
+      if (cachedData && !forceRefresh) {
         renderGrid(JSON.parse(cachedData));
         syncStatus.style.display = 'inline-flex';
         syncStatus.className = 'sync-status syncing';
         syncText.innerText = "背景同步更新中...";
-    } else {
+      } else {
         renderSkeleton();
         syncStatus.style.display = 'none';
+      }
+
+      const btn = document.getElementById('refresh-btn');
+      const btnIcon = document.getElementById('btn-icon');
+      btn.disabled = true;
+      btnIcon.classList.add('spin');
+
+      // 使用極速 CSV 背景更新 (讀取分離)
+      fetch(CSV_URL)
+        .then(response => {
+          if (!response.ok) throw new Error('讀取試算表失敗，請確認已設為「知道連結的人皆可查看」');
+          return response.text();
+        })
+        .then(csvText => {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+              const rawData = results.data;
+              const devices = rawData.map(row => ({
+                // ★★★ 注意：這裡需根據你的試算表「實際的欄位名稱」來修改對應 ★★★
+                id: row['財產標籤'] || row['設備ID'] || row['ID'] || Object.values(row)[0],
+                status: row['狀況'] || row['狀態'] || Object.values(row)[1],
+                user: row['新保管人'] || row['保管人'] || row['借用人'] || Object.values(row)[2] || ''
+              })).filter(d => d.id); // 過濾掉空行
+
+              const newDataString = JSON.stringify(devices);
+
+              // 若資料有變，或強制更新，或當時只有骨架屏，則重繪
+              if (newDataString !== cachedData || forceRefresh || !cachedData) {
+                localStorage.setItem('devicesCache', newDataString);
+
+                // 避免覆蓋正在選取的設備狀態
+                if (selectedDevices.length === 0) {
+                  renderGrid(devices);
+                }
+              }
+
+              btn.disabled = false;
+              btnIcon.classList.remove('spin');
+
+              syncStatus.style.display = 'inline-flex';
+              syncStatus.className = 'sync-status';
+              syncText.innerText = "已更新至最新狀態";
+              setTimeout(() => { if (!btn.disabled) syncStatus.style.display = 'none'; }, 3000);
+            },
+            error: function (err) {
+              console.error("CSV Parse Error:", err);
+              btn.disabled = false; btnIcon.classList.remove('spin');
+              Swal.fire('讀取失敗', '無法解析資料，請確認工作表 ID 是否填寫正確。', 'error');
+            }
+          });
+        })
+        .catch(e => {
+          console.error("Fetch API Error (Fallback to WebApp):", e);
+          // 如果 CSV 下載失敗(例如沒設定共用)，作為退場機制(Fallback)退回原本較慢的抓取方式
+          callApi('getDeviceStatus').then(devices => {
+            const newDataString = JSON.stringify(devices);
+            if (newDataString !== cachedData || forceRefresh || !cachedData) {
+              localStorage.setItem('devicesCache', newDataString);
+              if (selectedDevices.length === 0) {
+                renderGrid(devices);
+              }
+            }
+            btn.disabled = false; btnIcon.classList.remove('spin');
+            syncStatus.style.display = 'inline-flex';
+            syncStatus.className = 'sync-status';
+            syncText.innerText = "已更新至最新狀態";
+            setTimeout(() => { if (!btn.disabled) syncStatus.style.display = 'none'; }, 3000);
+          });
+        });
     }
 
-    const btn = document.getElementById('refresh-btn');
-    const btnIcon = document.getElementById('btn-icon');
-    btn.disabled = true;
-    btnIcon.classList.add('spin');
+    function renderGrid(devices) {
+      const container = document.getElementById('grid-container');
+      container.innerHTML = '';
 
-    // 背景更新
-    callApi('getDeviceStatus').then(devices => {
-        const newDataString = JSON.stringify(devices);
-        
-        // 若資料有變，或強制更新，或當時只有骨架屏，則重繪
-        if (newDataString !== cachedData || forceRefresh || !cachedData) {
-            localStorage.setItem('devicesCache', newDataString);
-            
-            // 避免覆蓋正在選取的設備狀態，實做簡單比對即可。這裡直接重繪。
-            // 也可以留著不重繪 if (selectedDevices.length === 0) renderGrid(devices);
-            if (selectedDevices.length === 0) {
-              renderGrid(devices);
-            }
-        }
-        
-        btn.disabled = false;
-        btnIcon.classList.remove('spin');
-        
-        syncStatus.style.display = 'inline-flex';
-        syncStatus.className = 'sync-status';
-        syncText.innerText = "已更新至最新狀態";
-        setTimeout(() => { if (!btn.disabled) syncStatus.style.display = 'none'; }, 3000);
-    });
-  }
-
-  function renderGrid(devices) {
-    const container = document.getElementById('grid-container');
-    container.innerHTML = ''; 
-
-    if (devices.length === 0) {
+      if (devices.length === 0) {
         container.innerHTML = '<div class="col-12 text-center text-muted py-5 mt-5 fw-bold fs-5">目前沒有載具資料</div>';
         return;
-    }
+      }
 
-    devices.forEach((d, i) => {
-      let statusClass = (d.status === '可借用') ? 'status-available' : (d.status === '其他' ? 'status-other' : 'status-inuse');
-      let displayInfo = (d.status === '可借用') ? '可借用' : (d.status === '其他' ? (d.user || '維修/其他') : d.user);
-      
-      let isSelected = selectedDevices.some(sd => sd.id === d.id);
-      let selectedClass = isSelected ? 'selected' : '';
+      devices.forEach((d, i) => {
+        let statusClass = (d.status === '可借用') ? 'status-available' : (d.status === '其他' ? 'status-other' : 'status-inuse');
+        let displayInfo = (d.status === '可借用') ? '可借用' : (d.status === '其他' ? (d.user || '維修/其他') : d.user);
 
-      container.innerHTML += `
-        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i*0.03}s">
+        let isSelected = selectedDevices.some(sd => sd.id === d.id);
+        let selectedClass = isSelected ? 'selected' : '';
+
+        container.innerHTML += `
+        <div class="col-6 col-md-4 col-lg-3 col-animate" style="animation-delay: ${i * 0.03}s">
           <div class="device-card ${statusClass} ${selectedClass}" id="card-${d.id}" onclick="toggleSelect('${d.id}', '${d.status}', '${d.user}')">
             <div class="device-id">${d.id}</div>
             <div class="device-info text-truncate" style="max-width: 85%;">${displayInfo}</div>
           </div>
         </div>`;
-    });
-  }
-
-  function initStudentData() {
-    const selSeat = document.getElementById('selSeat');
-    selSeat.innerHTML = '';
-    for (let i = 1; i <= 45; i++) {
-      let val = i.toString().padStart(2, '0');
-      selSeat.innerHTML += `<option value="${val}號">${val}號</option>`;
+      });
     }
-    selSeat.innerHTML += `<option value="其他">其他</option>`;
-    updateClassList();
-  }
 
-  function updateClassList() {
-    const sys = document.getElementById('selSystem').value;
-    const selClass = document.getElementById('selClass');
-    selClass.innerHTML = '';
+    function initStudentData() {
+      const selSeat = document.getElementById('selSeat');
+      selSeat.innerHTML = '';
+      for (let i = 1; i <= 45; i++) {
+        let val = i.toString().padStart(2, '0');
+        selSeat.innerHTML += `<option value="${val}號">${val}號</option>`;
+      }
+      selSeat.innerHTML += `<option value="其他">其他</option>`;
+      updateClassList();
+    }
 
-    const rules = SCHOOL_DATA[sys];
-    if (rules) {
+    function updateClassList() {
+      const sys = document.getElementById('selSystem').value;
+      const selClass = document.getElementById('selClass');
+      selClass.innerHTML = '';
+
+      const rules = SCHOOL_DATA[sys];
+      if (rules) {
         rules.forEach(range => {
-            for(let c = range.start; c <= range.end; c++) {
-                selClass.innerHTML += `<option value="${c}">${c}</option>`;
-            }
+          for (let c = range.start; c <= range.end; c++) {
+            selClass.innerHTML += `<option value="${c}">${c}</option>`;
+          }
         });
+      }
     }
-  }
 
-  function setRole(role) {
-    currentRole = role;
-    document.getElementById('btnFaculty').classList.toggle('active', role === 'Faculty');
-    document.getElementById('btnStudent').classList.toggle('active', role === 'Student');
-    document.getElementById('facultyInputArea').style.display = (role === 'Faculty') ? 'block' : 'none';
-    document.getElementById('studentInputArea').style.display = (role === 'Student') ? 'block' : 'none';
-  }
-
-  function toggleSelect(id, status, user) {
-    if (status === '其他') {
-      Swal.fire({ icon: 'error', title: '無法選取', text: '此載具目前進行維護中或暫不提供借用。', timer: 2000, showConfirmButton: false });
-      return;
+    function setRole(role) {
+      currentRole = role;
+      document.getElementById('btnFaculty').classList.toggle('active', role === 'Faculty');
+      document.getElementById('btnStudent').classList.toggle('active', role === 'Student');
+      document.getElementById('facultyInputArea').style.display = (role === 'Faculty') ? 'block' : 'none';
+      document.getElementById('studentInputArea').style.display = (role === 'Student') ? 'block' : 'none';
     }
-    
-    // Check constraint before modifying state
-    if (selectedDevices.length > 0 && selectedDevices[0].status !== status) {
+
+    function toggleSelect(id, status, user) {
+      if (status === '其他') {
+        Swal.fire({ icon: 'error', title: '無法選取', text: '此載具目前進行維護中或暫不提供借用。', timer: 2000, showConfirmButton: false });
+        return;
+      }
+
+      // Check constraint before modifying state
+      if (selectedDevices.length > 0 && selectedDevices[0].status !== status) {
         // Find existing index
         const idx = selectedDevices.findIndex(d => d.id === id);
         // if idx === -1 (meaning we are adding a NEW element with conflict)
         if (idx === -1) {
-            Swal.fire({ icon: 'warning', title: '狀態衝突', text: '不可同時選取需要「借出」與需要「歸還」的載具，請分批處理。' });
-            return;
+          Swal.fire({ icon: 'warning', title: '狀態衝突', text: '不可同時選取需要「借出」與需要「歸還」的載具，請分批處理。' });
+          return;
         }
-    }
-    
-    const card = document.getElementById('card-' + id);
-    const index = selectedDevices.findIndex(d => d.id === id);
-    if (index > -1) {
-      selectedDevices.splice(index, 1);
-      card.classList.remove('selected');
-    } else {
-      selectedDevices.push({id, status, user});
-      card.classList.add('selected');
-    }
-    
-    const bottomBar = document.getElementById('bottomBar');
-    if (selectedDevices.length > 0) {
-      bottomBar.classList.add('show');
-    } else {
-      bottomBar.classList.remove('show');
-    }
-    document.getElementById('selectedCount').innerText = selectedDevices.length;
-  }
+      }
 
-  function resizeCanvas() {
-    const canvas = document.getElementById('signature-canvas');
-    const container = document.getElementById('signature-pad-container');
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = container.offsetWidth * ratio;
-    canvas.height = container.offsetHeight * ratio;
-    canvas.getContext("2d").scale(ratio, ratio);
-    signaturePad.clear();
-  }
+      const card = document.getElementById('card-' + id);
+      const index = selectedDevices.findIndex(d => d.id === id);
+      if (index > -1) {
+        selectedDevices.splice(index, 1);
+        card.classList.remove('selected');
+      } else {
+        selectedDevices.push({ id, status, user });
+        card.classList.add('selected');
+      }
 
-  function openBatchModal() {
-    const type = (selectedDevices[0].status === '可借用') ? '借出' : '歸還';
-    document.getElementById('modalActionTitle').innerText = `${type}確認 (${selectedDevices.length}台)`;
-    
-    const reasonArea = document.getElementById('reasonArea');
-    const nameLabel = document.getElementById('nameLabel');
-
-    if (type === '歸還') {
-      nameLabel.innerText = "歸還者姓名";
-      document.getElementById('roleToggleArea').style.display = 'none';
-      document.getElementById('facultyInputArea').style.display = 'block';
-      document.getElementById('studentInputArea').style.display = 'none';
-      document.getElementById('facultyName').value = selectedDevices[0].user;
-      reasonArea.style.display = 'none'; 
-      document.getElementById('borrowReason').value = '其他'; 
-    } else {
-      nameLabel.innerText = "教職員姓名";
-      document.getElementById('roleToggleArea').style.display = 'flex';
-      setRole('Faculty');
-      document.getElementById('facultyName').value = '';
-      reasonArea.style.display = 'block';
-      document.getElementById('borrowReason').value = '教學用'; 
-    }
-    actionModal.show();
-  }
-
-  function submitBatch() {
-    let finalName = "";
-    if (currentRole === 'Faculty' || selectedDevices[0].status === '外借中') {
-      finalName = document.getElementById('facultyName').value;
-    } else {
-      finalName = `${document.getElementById('selSystem').value}${document.getElementById('selClass').value} (${document.getElementById('selSeat').value})`;
+      const bottomBar = document.getElementById('bottomBar');
+      if (selectedDevices.length > 0) {
+        bottomBar.classList.add('show');
+      } else {
+        bottomBar.classList.remove('show');
+      }
+      document.getElementById('selectedCount').innerText = selectedDevices.length;
     }
 
-    if (!finalName || signaturePad.isEmpty()) {
-      Swal.fire({ icon: 'warning', title: '資料未齊全', text: '請確實填寫姓名並完成電子簽名！' });
-      return;
+    function resizeCanvas() {
+      const canvas = document.getElementById('signature-canvas');
+      const container = document.getElementById('signature-pad-container');
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = container.offsetWidth * ratio;
+      canvas.height = container.offsetHeight * ratio;
+      canvas.getContext("2d").scale(ratio, ratio);
+      signaturePad.clear();
     }
 
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; 
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>處理中...';
+    function openBatchModal() {
+      const type = (selectedDevices[0].status === '可借用') ? '借出' : '歸還';
+      document.getElementById('modalActionTitle').innerText = `${type}確認 (${selectedDevices.length}台)`;
 
-    const payload = {
-      deviceIds: selectedDevices.map(d => d.id),
-      userName: finalName,
-      type: (selectedDevices[0].status === '可借用') ? '借出' : '歸還',
-      reason: document.getElementById('borrowReason').value,
-      powerCable: document.getElementById('powerCable').checked,
-      note: document.getElementById('note').value,
-      signature: signaturePad.toDataURL()
-    };
+      const reasonArea = document.getElementById('reasonArea');
+      const nameLabel = document.getElementById('nameLabel');
 
-    callApi('processTransaction', payload).then(res => {
-        if(res.status === 'success'){
-            Swal.fire({
-              icon: 'success', 
-              title: '處理完成！', 
-              text: res.message, 
-              confirmButtonColor: '#4F46E5',
-              customClass: { popup: 'rounded-4' }
-            });
-            actionModal.hide();
-            // 送出成功後強制更新狀態
-            loadDevices(true);
+      if (type === '歸還') {
+        nameLabel.innerText = "歸還者姓名";
+        document.getElementById('roleToggleArea').style.display = 'none';
+        document.getElementById('facultyInputArea').style.display = 'block';
+        document.getElementById('studentInputArea').style.display = 'none';
+        document.getElementById('facultyName').value = selectedDevices[0].user;
+        reasonArea.style.display = 'none';
+        document.getElementById('borrowReason').value = '其他';
+      } else {
+        nameLabel.innerText = "教職員姓名";
+        document.getElementById('roleToggleArea').style.display = 'flex';
+        setRole('Faculty');
+        document.getElementById('facultyName').value = '';
+        reasonArea.style.display = 'block';
+        document.getElementById('borrowReason').value = '教學用';
+      }
+      actionModal.show();
+    }
+
+    function submitBatch() {
+      let finalName = "";
+      if (currentRole === 'Faculty' || selectedDevices[0].status === '外借中') {
+        finalName = document.getElementById('facultyName').value;
+      } else {
+        finalName = `${document.getElementById('selSystem').value}${document.getElementById('selClass').value} (${document.getElementById('selSeat').value})`;
+      }
+
+      if (!finalName || signaturePad.isEmpty()) {
+        Swal.fire({ icon: 'warning', title: '資料未齊全', text: '請確實填寫姓名並完成電子簽名！' });
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>處理中...';
+
+      const payload = {
+        deviceIds: selectedDevices.map(d => d.id),
+        userName: finalName,
+        type: (selectedDevices[0].status === '可借用') ? '借出' : '歸還',
+        reason: document.getElementById('borrowReason').value,
+        powerCable: document.getElementById('powerCable').checked,
+        note: document.getElementById('note').value,
+        signature: signaturePad.toDataURL()
+      };
+
+      callApi('processTransaction', payload).then(res => {
+        if (res.status === 'success') {
+          Swal.fire({
+            icon: 'success',
+            title: '處理完成！',
+            text: res.message,
+            confirmButtonColor: '#4F46E5',
+            customClass: { popup: 'rounded-4' }
+          });
+          actionModal.hide();
+          // 送出成功後強制更新狀態
+          loadDevices(true);
         } else {
-            Swal.fire('處理失敗', res.message, 'error');
+          Swal.fire('處理失敗', res.message, 'error');
         }
         btn.disabled = false; btn.innerText = "確認提交";
-    }).catch(() => {
+      }).catch(() => {
         btn.disabled = false; btn.innerText = "確認提交";
-    });
-  }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
