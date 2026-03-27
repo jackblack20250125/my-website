@@ -522,7 +522,16 @@
     const scanType = document.querySelector('input[name="scanType"]:checked').value;
     let qrBoxConfig = (scanType === 'long') ? { width: 320, height: 100 } : { width: 250, height: 250 };
 
-    const config = { fps: 15, qrbox: qrBoxConfig, aspectRatio: 1.0 };
+    const config = { 
+      fps: 10, 
+      qrbox: qrBoxConfig, 
+      aspectRatio: 1.0,
+      // 關閉手機原生的 BarcodeDetector (有時原生的 API 遇到連續 0 會誤判少碼)
+      useBarCodeDetectorIfSupported: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: false
+      }
+    };
 
     html5QrCode.start(
       { facingMode: "environment" }, 
