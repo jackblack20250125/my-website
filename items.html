@@ -336,6 +336,7 @@
       <div class="grid-form">
         <div class="form-group"><label>條碼編號 *</label><input type="text" id="a_bc" placeholder="掃描或輸入"></div>
         <div class="form-group"><label>財產編號</label><input type="text" id="a_pid"></div>
+        <div class="form-group grid-full"><label>系統編號</label><input type="text" id="a_sysid"></div>
         <div class="form-group grid-full"><label>物品名稱 *</label><input type="text" id="a_name"></div>
         <div class="form-group"><label>廠牌</label><input type="text" id="a_brand"></div>
         <div class="form-group"><label>型號</label><input type="text" id="a_model"></div>
@@ -366,6 +367,7 @@
     <div class="card-header">
       <div>
         <h4 class="card-title" id="resName">--</h4>
+        <div style="font-size: 0.85rem; color: var(--color-borrow); margin-top: 4px; font-weight: 600;" id="resSysId"></div>
         <div style="font-size: 0.85rem; color: var(--color-text-sub); margin-top: 4px;" id="resAcc"></div>
       </div>
       <span class="badge" id="resCat">--</span>
@@ -628,6 +630,7 @@
         curItem = item;
         document.getElementById('itemCard').classList.remove('hidden');
         document.getElementById('resName').innerText = item.name || "未命名物品";
+        document.getElementById('resSysId').innerText = item.systemId ? `系統編號：${item.systemId}` : "";
         document.getElementById('resCat').innerText = item.category || "無分類";
         document.getElementById('resAcc').innerText = item.accessories ? `配件包含: ${item.accessories}` : "無特別配件";
         
@@ -778,6 +781,7 @@
       mode: curMode,
       barcode: curItem.barcode, 
       propId: curItem.propId, 
+      systemId: curItem.systemId,
       category: curItem.category, 
       name: curItem.name,
       itemRow: curItem.row,
@@ -802,6 +806,7 @@
     const p = {
       barcode: document.getElementById('a_bc').value.trim(),
       propId: document.getElementById('a_pid').value.trim(),
+      systemId: document.getElementById('a_sysid').value.trim(),
       name: document.getElementById('a_name').value.trim(),
       brand: document.getElementById('a_brand').value.trim(),
       model: document.getElementById('a_model').value.trim(),
