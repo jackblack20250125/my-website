@@ -629,19 +629,20 @@
                 </div>
                 
                 <!-- 新增篩選功能 -->
-                <div class="filters-container" style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-                    <select id="filterYear" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
-                        <option value="">-- 電腦年分 --</option>
-                    </select>
-                    <select id="filterStatus" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
-                        <option value="">-- 狀況 --</option>
-                    </select>
-                    <select id="filterModel" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
-                        <option value="">-- 型號 --</option>
-                    </select>
-                    <select id="filterLocation" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
-                        <option value="">-- 新位置 --</option>
-                    </select>
+                <div class="filters-container" style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="filterYear" list="flist_year" class="form-control" placeholder="-- 電腦年分 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_year"></datalist>
+
+                    <input type="text" id="filterStatus" list="flist_status" class="form-control" placeholder="-- 狀況 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_status"></datalist>
+
+                    <input type="text" id="filterModel" list="flist_model" class="form-control" placeholder="-- 型號 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_model"></datalist>
+
+                    <input type="text" id="filterLocation" list="flist_loc" class="form-control" placeholder="-- 新位置 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_loc"></datalist>
+                    
+                    <div id="filterCount" style="color: var(--accent-glow); font-weight: 600; min-width: 80px; display: none;">符合: 0 筆</div>
                 </div>
 
                 <div class="status-message" id="statusMessage">系統初始化中，請稍候...</div>
@@ -853,23 +854,23 @@
                 }
             });
 
-            // 填入下拉選單選項
+            // 填入篩選清單選項
             const filterMap = {
-                '電腦年分': 'filterYear',
-                '狀況': 'filterStatus',
-                '型號': 'filterModel',
-                '新位置': 'filterLocation'
+                '電腦年分': 'flist_year',
+                '狀況': 'flist_status',
+                '型號': 'flist_model',
+                '新位置': 'flist_loc'
             };
             
             Object.keys(filterMap).forEach(field => {
-                const selectElement = document.getElementById(filterMap[field]);
-                if (selectElement) {
+                const listElement = document.getElementById(filterMap[field]);
+                if (listElement) {
+                    listElement.innerHTML = '';
                     const sortedVals = Array.from(uniqueValues[field]).sort();
                     sortedVals.forEach(val => {
                         const opt = document.createElement('option');
                         opt.value = val;
-                        opt.textContent = val;
-                        selectElement.appendChild(opt);
+                        listElement.appendChild(opt);
                     });
                 }
             });
@@ -888,7 +889,10 @@
                 
                 card.innerHTML = `
                     <div class="card-header">
-                        <div class="card-title">${propLabel}</div>
+                        <div class="card-title" style="display: flex; align-items: center; gap: 0.8rem;">
+                            <input type="checkbox" class="record-checkbox" value="${propLabel}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-glow);">
+                            ${propLabel}
+                        </div>
                         <div class="card-date">${dateVal}</div>
                     </div>
                     <div class="info-grid">
@@ -940,6 +944,17 @@
                     </div>
                 `;
                 resultsContainer.appendChild(card);
+                
+                const cb = card.querySelector('.record-checkbox');
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        card.style.borderColor = 'var(--accent-glow)';
+                        card.style.boxShadow = '0 0 0 2px var(--accent-dim), var(--shadow-md)';
+                    } else {
+                        card.style.borderColor = 'rgba(0,0,0,0.05)';
+                        card.style.boxShadow = 'var(--shadow-md)';
+                    }
+                });
             });
         }
 
@@ -955,6 +970,7 @@
             if (isQueryEmpty && !filterYearVal && !filterStatusVal && !filterModelVal && !filterLocationVal) {
                 resultsContainer.innerHTML = '';
                 notFoundArea.style.display = 'none';
+                document.getElementById('filterCount').style.display = 'none';
                 return;
             }
 
@@ -971,10 +987,13 @@
 
             if (matches.length > 0) {
                 notFoundArea.style.display = 'none';
+                document.getElementById('filterCount').style.display = 'block';
+                document.getElementById('filterCount').textContent = `符合: ${matches.length} 筆`;
                 renderCards(matches);
             } else {
                 resultsContainer.innerHTML = '';
                 notFoundArea.style.display = 'flex';
+                document.getElementById('filterCount').style.display = 'none';
                 
                 // set default labal value on not found
                 const rawVal = searchInput.value.trim();
@@ -989,10 +1008,10 @@
         }
 
         searchInput.addEventListener('input', handleSearch);
-        document.getElementById('filterYear').addEventListener('change', handleSearch);
-        document.getElementById('filterStatus').addEventListener('change', handleSearch);
-        document.getElementById('filterModel').addEventListener('change', handleSearch);
-        document.getElementById('filterLocation').addEventListener('change', handleSearch);
+        document.getElementById('filterYear').addEventListener('input', handleSearch);
+        document.getElementById('filterStatus').addEventListener('input', handleSearch);
+        document.getElementById('filterModel').addEventListener('input', handleSearch);
+        document.getElementById('filterLocation').addEventListener('input', handleSearch);
 
         // Modal Logic
         function openModal() {
