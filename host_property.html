@@ -948,10 +948,12 @@
                 const cb = card.querySelector('.record-checkbox');
                 cb.addEventListener('change', function() {
                     if (this.checked) {
-                        card.style.borderColor = 'var(--accent-glow)';
-                        card.style.boxShadow = '0 0 0 2px var(--accent-dim), var(--shadow-md)';
+                        card.style.borderColor = 'var(--danger)';
+                        card.style.backgroundColor = 'rgba(255, 59, 48, 0.08)'; // 淡紅色背景
+                        card.style.boxShadow = '0 0 0 2px rgba(255, 59, 48, 0.15), var(--shadow-md)';
                     } else {
                         card.style.borderColor = 'rgba(0,0,0,0.05)';
+                        card.style.backgroundColor = 'var(--bg-card)';
                         card.style.boxShadow = 'var(--shadow-md)';
                     }
                 });
