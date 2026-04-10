@@ -627,6 +627,23 @@
                         <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                 </div>
+                
+                <!-- 新增篩選功能 -->
+                <div class="filters-container" style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <select id="filterYear" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                        <option value="">-- 電腦年分 --</option>
+                    </select>
+                    <select id="filterStatus" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                        <option value="">-- 狀況 --</option>
+                    </select>
+                    <select id="filterModel" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                        <option value="">-- 型號 --</option>
+                    </select>
+                    <select id="filterLocation" class="form-control" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                        <option value="">-- 新位置 --</option>
+                    </select>
+                </div>
+
                 <div class="status-message" id="statusMessage">系統初始化中，請稍候...</div>
                 
                 <div class="not-found-area" id="notFoundArea">
@@ -835,6 +852,27 @@
                     });
                 }
             });
+
+            // 填入下拉選單選項
+            const filterMap = {
+                '電腦年分': 'filterYear',
+                '狀況': 'filterStatus',
+                '型號': 'filterModel',
+                '新位置': 'filterLocation'
+            };
+            
+            Object.keys(filterMap).forEach(field => {
+                const selectElement = document.getElementById(filterMap[field]);
+                if (selectElement) {
+                    const sortedVals = Array.from(uniqueValues[field]).sort();
+                    sortedVals.forEach(val => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        opt.textContent = val;
+                        selectElement.appendChild(opt);
+                    });
+                }
+            });
         }
 
         function renderCards(records) {
@@ -907,8 +945,14 @@
 
         function handleSearch() {
             const query = searchInput.value.trim().toLowerCase();
+            const isQueryEmpty = query === '' || query === '314010103-';
             
-            if (query === '') {
+            const filterYearVal = document.getElementById('filterYear').value;
+            const filterStatusVal = document.getElementById('filterStatus').value;
+            const filterModelVal = document.getElementById('filterModel').value;
+            const filterLocationVal = document.getElementById('filterLocation').value;
+
+            if (isQueryEmpty && !filterYearVal && !filterStatusVal && !filterModelVal && !filterLocationVal) {
                 resultsContainer.innerHTML = '';
                 notFoundArea.style.display = 'none';
                 return;
@@ -916,7 +960,13 @@
 
             const matches = globalData.filter(row => {
                 const label = (row['財產標籤'] || '').toLowerCase();
-                return label.includes(query);
+                const matchQuery = isQueryEmpty || label.includes(query);
+                const matchYear = !filterYearVal || row['電腦年分'] === filterYearVal;
+                const matchStatus = !filterStatusVal || row['狀況'] === filterStatusVal;
+                const matchModel = !filterModelVal || row['型號'] === filterModelVal;
+                const matchLocation = !filterLocationVal || row['新位置'] === filterLocationVal;
+                
+                return matchQuery && matchYear && matchStatus && matchModel && matchLocation;
             });
 
             if (matches.length > 0) {
@@ -939,6 +989,10 @@
         }
 
         searchInput.addEventListener('input', handleSearch);
+        document.getElementById('filterYear').addEventListener('change', handleSearch);
+        document.getElementById('filterStatus').addEventListener('change', handleSearch);
+        document.getElementById('filterModel').addEventListener('change', handleSearch);
+        document.getElementById('filterLocation').addEventListener('change', handleSearch);
 
         // Modal Logic
         function openModal() {
