@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -787,13 +787,13 @@
 
         // Fields mapping
         const fieldsToExtract = [
-            '電腦年分', '狀況', '型號', '其他', 
+            '電腦年分', '處理狀況', '型號', '其他', 
             '新保管人', '新位置', '原保管人', '原使用處室或位置'
         ];
         
         const datalistMap = {
             '電腦年分': 'dl_year',
-            '狀況': 'dl_status',
+            '處理狀況': 'dl_status',
             '型號': 'dl_model',
             '其他': 'dl_other',
             '新保管人': 'dl_newkeeper',
@@ -902,7 +902,7 @@
             // 填入篩選清單選項
             const filterMap = {
                 '電腦年分': 'flist_year',
-                '狀況': 'flist_status',
+                '處理狀況': 'flist_status',
                 '型號': 'flist_model',
                 '新位置': 'flist_loc'
             };
@@ -922,10 +922,10 @@
 
             // 填入狀況 <select> 選項
             const statusSelect = document.getElementById('f_status');
-            if (statusSelect && uniqueValues['狀況']) {
+            if (statusSelect && uniqueValues['處理狀況']) {
                 const currentVal = statusSelect.value;
                 statusSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
-                Array.from(uniqueValues['狀況']).sort().forEach(val => {
+                Array.from(uniqueValues['處理狀況']).sort().forEach(val => {
                     const opt = document.createElement('option');
                     opt.value = val;
                     opt.textContent = val;
@@ -963,7 +963,7 @@
                     <div class="info-grid">
                         <div class="info-item">
                             <span class="info-label">狀況</span>
-                            <span class="info-val">${record['狀況'] || '-'}</span>
+                            <span class="info-val">${record['處理狀況'] || '-'}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">電腦年分</span>
@@ -1053,7 +1053,7 @@
                 const label = (row['財產編號'] || '').trim().toLowerCase();
                 const matchQuery = isQueryEmpty || label.includes(query);
                 const matchYear = !filterYearVal || row['電腦年分'] === filterYearVal;
-                const matchStatus = !filterStatusVal || row['狀況'] === filterStatusVal;
+                const matchStatus = !filterStatusVal || row['處理狀況'] === filterStatusVal;
                 const matchModel = !filterModelVal || row['型號'] === filterModelVal;
                 const matchLocation = !filterLocationVal || row['新位置'] === filterLocationVal;
                 
@@ -1115,7 +1115,7 @@
                 fLabel.style.opacity = '0.7';
                 _setField('f_date',      record['異動日期或登記追蹤日期'] || record['異動日期'] || _todayStr());
                 _setField('f_year',      record['電腦年分']);
-                _setField('f_status',    record['狀況']);
+                _setField('f_status',    record['處理狀況']);
                 _setField('f_model',     record['型號']);
                 _setField('f_other',     record['其他']);
                 _setField('f_newkeeper', record['新保管人']);
@@ -1164,7 +1164,7 @@
                 '財產編號':            labelVal,
                 '異動日期或登記追蹤日期': document.getElementById('f_date').value,
                 '電腦年分':            document.getElementById('f_year').value,
-                '狀況':               document.getElementById('f_status').value,
+                '處理狀況':               document.getElementById('f_status').value,
                 '型號':               document.getElementById('f_model').value,
                 '其他':               document.getElementById('f_other').value,
                 '新保管人':            document.getElementById('f_newkeeper').value,
