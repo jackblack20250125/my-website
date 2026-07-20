@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -749,9 +749,15 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" id="btnCancelModal">取消</button>
-                <button type="button" class="btn btn-primary" id="btnSubmitForm">儲存資料</button>
+            <div class="modal-footer" style="flex-wrap: wrap; gap: 0.8rem;">
+                <div style="display:flex; align-items:center; gap:0.6rem; flex:1; min-width:200px;">
+                    <label style="font-size:0.9rem; font-weight:600; white-space:nowrap; color:var(--text-muted);">🔑 操作密碼</label>
+                    <input type="password" id="f_token" class="form-control" placeholder="請輸入密碼" style="flex:1;">
+                </div>
+                <div style="display:flex; gap:0.8rem;">
+                    <button type="button" class="btn" id="btnCancelModal">取消</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitForm">儲存資料</button>
+                </div>
             </div>
         </div>
     </div>
@@ -762,7 +768,7 @@
         const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
         // ★ 部署 GAS 後貼上你的 Web App URL
         const GAS_URL    = 'https://script.google.com/macros/s/AKfycby7TzQUXBFi6FH5gB2XjCYgAEr3ZeE2f8awLjrDb6BzXVPC-2_vmfKM7I8YjCz1vW6d/exec';
-        const GAS_TOKEN  = 'lchs';
+        // token 不放前端，由使用者輸入
 
         const CACHE_KEY = 'asset_data_v2';
         const CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
@@ -1158,9 +1164,12 @@
                 return;
             }
 
+            const tokenVal = document.getElementById('f_token').value;
+            if (!tokenVal) { alert('請輸入操作密碼'); return; }
+
             const payload = {
                 action: currentEditMode,
-                _token: GAS_TOKEN,
+                _token: tokenVal,
                 '財產編號':            labelVal,
                 '異動日期或登記追蹤日期': document.getElementById('f_date').value,
                 '電腦年分':            document.getElementById('f_year').value,
