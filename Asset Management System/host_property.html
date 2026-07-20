@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主機財產管理系統</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            /* Light theme - Apple-like aesthetics */
+            --bg-base: #f5f5f7;
+            --bg-panel: #ffffff;
+            --bg-card: #ffffff;
+            --accent-glow: #0071e3; /* Apple Blue */
+            --accent-dim: rgba(0, 113, 227, 0.15);
+            --text-main: #1d1d1f;
+            --text-muted: #86868b;
+            --danger: #ff3b30;
+            --success: #34c759;
+            --border: #d2d2d7;
+            --border-glow: #0071e3;
+            
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            
+            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+            
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            /* Subtle background flair */
+            background-image: radial-gradient(circle at 15% 50%, rgba(0, 113, 227, 0.03), transparent 25%),
+                              radial-gradient(circle at 85% 30%, rgba(52, 199, 89, 0.03), transparent 25%);
+            background-attachment: fixed;
+        }
+
+        /* Navbar / Header */
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(210, 210, 215, 0.5);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+        }
+
+        .logo {
+            font-family: 'Orbitron', -apple-system, sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            fill: none;
+            stroke: var(--accent-glow);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Layout */
+        main {
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Controls Area */
+        .controls-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Search Box */
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+            border-radius: var(--radius-lg);
+            font-size: 1.05rem;
+            font-family: inherit;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 0 4px var(--accent-dim), var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            fill: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .search-input:focus + .search-icon,
+        .search-input:not(:placeholder-shown) + .search-icon {
+            fill: var(--accent-glow);
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:hover {
+            background: #f8f8f9;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--accent-glow);
+            border-color: var(--accent-glow);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #0077ed;
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 113, 227, 0.4);
+        }
+
+        /* Status & Empty state */
+        .status-message {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            min-height: 24px;
+            padding-left: 0.5rem;
+        }
+
+        .not-found-area {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+            background: rgba(255, 59, 48, 0.08);
+            border-left: 4px solid var(--danger);
+            padding: 1.5rem;
+            border-radius: var(--radius-sm);
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .not-found-text {
+            color: #d92a20;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            font-size: 1.05rem;
+        }
+
+        /* Data Grid */
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .data-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: var(--radius-lg);
+            padding: 1.8rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            animation: slideUpFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+            box-shadow: var(--shadow-md);
+        }
+
+        .data-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--accent-glow);
+            border-radius: 4px 0 0 4px;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .card-date {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: #f0f0f5;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .info-label.text-success {
+            color: var(--success);
+        }
+
+        .info-val {
+            font-size: 1rem;
+            color: var(--text-main);
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        /* Modal Form */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(30px) scale(0.95);
+            transition: var(--transition);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .modal-title::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-glow);
+            border-radius: 50%;
+        }
+
+        .btn-close {
+            background: #f0f0f5;
+            border: none;
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-close:hover {
+            background: #e5e5ea;
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            background: #f8f8f9;
+            border: 1.5px solid var(--border);
+            color: var(--text-main);
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 0 4px var(--accent-dim);
+            background: #ffffff;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background: #fafafa;
+        }
+
+        /* Loading */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(0, 113, 227, 0.2);
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin: 3rem auto;
+            display: none;
+        }
+        .loader::after {
+            content: '';  
+            box-sizing: border-box;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid;
+            border-color: var(--accent-glow) transparent;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design (RWD) Adjustments */
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            header .btn {
+                width: auto;
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            .logo {
+                font-size: 1.1rem;
+            }
+            main {
+                padding: 1.5rem 1rem;
+            }
+            .controls-area {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-container {
+                max-width: 100%;
+            }
+            .search-input {
+                font-size: 1rem;
+                padding: 1rem 1.2rem 1rem 3rem;
+            }
+            .not-found-area {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+            .data-card {
+                padding: 1.2rem;
+            }
+            .card-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-header {
+                padding: 1.2rem 1.5rem;
+            }
+            .modal-body {
+                padding: 1.2rem 1.5rem;
+            }
+            .modal-footer {
+                padding: 1.2rem 1.5rem;
+                flex-direction: column-reverse; /* Buttons stack nicely */
+            }
+            .modal-footer .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar track */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <svg class="logo-icon" viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="M10 4v16"></path>
+                <path d="M14 4v16"></path>
+                <circle cx="6" cy="12" r="1" fill="currentColor"></circle>
+                <circle cx="18" cy="12" r="1" fill="currentColor"></circle>
+            </svg>
+            HOST:PROPERTY_MGMT
+        </div>
+        <a href="../index.html" class="btn">返回首頁</a>
+    </header>
+
+    <main>
+        <div class="controls-area">
+            <div style="flex:1;">
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="掃描或輸入財產標籤..." autocomplete="off" value="314010103-">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                
+                <!-- 新增篩選功能 -->
+                <div class="filters-container" style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="filterYear" list="flist_year" class="form-control" placeholder="-- 電腦年分 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_year"></datalist>
+
+                    <input type="text" id="filterStatus" list="flist_status" class="form-control" placeholder="-- 狀況 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_status"></datalist>
+
+                    <input type="text" id="filterModel" list="flist_model" class="form-control" placeholder="-- 型號 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_model"></datalist>
+
+                    <input type="text" id="filterLocation" list="flist_loc" class="form-control" placeholder="-- 新位置 --" style="flex: 1; min-width: 120px; padding: 0.6rem 1rem;">
+                    <datalist id="flist_loc"></datalist>
+                    
+                    <div id="filterCount" style="color: var(--accent-glow); font-weight: 600; min-width: 80px; display: none;">符合: 0 筆</div>
+                </div>
+
+                <div class="status-message" id="statusMessage">系統初始化中，請稍候...</div>
+                
+                <div class="not-found-area" id="notFoundArea">
+                    <div class="not-found-text">
+                        <svg viewBox="0 0 24 24" width="20" height="20" style="display:inline; vertical-align:text-bottom; margin-right:4px;">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        查無此財產標籤資料
+                    </div>
+                    <button id="btnOpenAddForm" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v16m8-8H4"/></svg>
+                        新增財產
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <span class="loader" id="loader"></span>
+        <div class="results-container" id="resultsContainer">
+            <!-- Data Cards will be injected here -->
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">新增主機財產登記</div>
+                <button class="btn-close" id="btnCloseModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm" class="form-grid">
+                    
+                    <div class="form-group">
+                        <label class="form-label">財產標籤</label>
+                        <input type="text" class="form-control" id="f_label" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">異動日期或登記追蹤日期</label>
+                        <input type="date" class="form-control" id="f_date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">電腦年分</label>
+                        <input type="text" list="dl_year" class="form-control" id="f_year">
+                        <datalist id="dl_year"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">狀況</label>
+                        <input type="text" list="dl_status" class="form-control" id="f_status">
+                        <datalist id="dl_status"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">型號</label>
+                        <input type="text" list="dl_model" class="form-control" id="f_model">
+                        <datalist id="dl_model"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">其他</label>
+                        <input type="text" list="dl_other" class="form-control" id="f_other">
+                        <datalist id="dl_other"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">新保管人</label>
+                        <input type="text" list="dl_newkeeper" class="form-control" id="f_newkeeper">
+                        <datalist id="dl_newkeeper"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">新位置</label>
+                        <input type="text" list="dl_newloc" class="form-control" id="f_newloc">
+                        <datalist id="dl_newloc"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">原保管人</label>
+                        <input type="text" list="dl_oldkeeper" class="form-control" id="f_oldkeeper">
+                        <datalist id="dl_oldkeeper"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">原使用處室或位置</label>
+                        <input type="text" list="dl_oldloc" class="form-control" id="f_oldloc">
+                        <datalist id="dl_oldloc"></datalist>
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">備註1</label>
+                        <input type="text" class="form-control" id="f_note1">
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">備註2</label>
+                        <input type="text" class="form-control" id="f_note2">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" id="btnCancelModal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitForm">儲存資料</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID   = '1qg3nYreVGnIejBpkoZPVb-7PvEjpqAZuVowjnvBHvy8';
+        const SHEET_NAME = 'data';
+        const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+        // ★ 部署 GAS 後貼上你的 Web App URL
+        const GAS_URL    = 'https://script.google.com/macros/s/AKfycby7TzQUXBFi6FH5gB2XjCYgAEr3ZeE2f8awLjrDb6BzXVPC-2_vmfKM7I8YjCz1vW6d/exec';
+        const GAS_TOKEN  = 'lchs';
+
+        const CACHE_KEY = 'asset_data_v2';
+        const CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+
+        let globalData = [];
+        let uniqueValues = {};
+        let currentEditMode   = 'add';  // 'add' | 'update'
+        let currentEditLabel  = null;   // 編輯模式時的目標財產標籤 
+
+        const searchInput = document.getElementById('searchInput');
+        const loader = document.getElementById('loader');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const notFoundArea = document.getElementById('notFoundArea');
+        
+        // Modal elements
+        const addModal = document.getElementById('addModal');
+        const btnOpenAddForm = document.getElementById('btnOpenAddForm');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const btnCancelModal = document.getElementById('btnCancelModal');
+        const btnSubmitForm = document.getElementById('btnSubmitForm');
+
+        // Fields mapping
+        const fieldsToExtract = [
+            '電腦年分', '狀況', '型號', '其他', 
+            '新保管人', '新位置', '原保管人', '原使用處室或位置'
+        ];
+        
+        const datalistMap = {
+            '電腦年分': 'dl_year',
+            '狀況': 'dl_status',
+            '型號': 'dl_model',
+            '其他': 'dl_other',
+            '新保管人': 'dl_newkeeper',
+            '新位置': 'dl_newloc',
+            '原保管人': 'dl_oldkeeper',
+            '原使用處室或位置': 'dl_oldloc'
+        };
+
+        async function init(forceRefresh = false) {
+            loader.style.display = 'block';
+            statusMessage.textContent = '讀取 Google 試算表資料中...';
+
+            // ── 速度優化：先嘗試 sessionStorage 快取 ──
+            if (!forceRefresh) {
+                try {
+                    const cached = sessionStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const { data, ts } = JSON.parse(cached);
+                        if (Date.now() - ts < CACHE_TTL) {
+                            globalData = data.map(row => {
+                                const cleaned = {};
+                                Object.keys(row).forEach(k => {
+                                    const cleanKey = k.replace(/^\uFEFF/, '').trim();
+                                    cleaned[cleanKey] = row[k];
+                                });
+                                return cleaned;
+                            });
+                            loader.style.display = 'none';
+                            statusMessage.textContent = `已載入資料（共 ${globalData.length} 筆，快取）。輸入財產標籤進行查詢。`;
+                            extractUniqueValues();
+                            populateDatalists();
+                            searchInput.focus();
+                            return;
+                        }
+                    }
+                } catch(_) {}
+            }
+
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const csvText = await response.text();
+
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        globalData = results.data.map(row => {
+                            const cleaned = {};
+                            Object.keys(row).forEach(k => {
+                                const cleanKey = k.replace(/^\uFEFF/, '').trim();
+                                cleaned[cleanKey] = row[k];
+                            });
+                            return cleaned;
+                        });
+                        try {
+                            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: globalData, ts: Date.now() }));
+                        } catch(_) {}
+                        loader.style.display = 'none';
+                        statusMessage.textContent = `已成功載入資料（共 ${globalData.length} 筆）。輸入上方財產標籤進行查詢。`;
+                        extractUniqueValues();
+                        populateDatalists();
+                        searchInput.focus();
+                    },
+                    error: function(err) {
+                        statusMessage.textContent = '資料載入失敗: ' + err.message;
+                        loader.style.display = 'none';
+                    }
+                });
+            } catch (error) {
+                statusMessage.textContent = '無法連線至資料庫或試算表尚未公開。請確認試算表分享權限。';
+                loader.style.display = 'none';
+                console.error(error);
+            }
+        }
+
+        function extractUniqueValues() {
+            fieldsToExtract.forEach(field => {
+                uniqueValues[field] = new Set();
+            });
+
+            globalData.forEach(row => {
+                fieldsToExtract.forEach(field => {
+                    if (row[field] && row[field].trim() !== '') {
+                        uniqueValues[field].add(row[field].trim());
+                    }
+                });
+            });
+        }
+
+        function populateDatalists() {
+            fieldsToExtract.forEach(field => {
+                const dl_id = datalistMap[field];
+                const dl = document.getElementById(dl_id);
+                if(dl) {
+                    dl.innerHTML = '';
+                    const sortedVals = Array.from(uniqueValues[field]).sort();
+                    sortedVals.forEach(val => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        dl.appendChild(opt);
+                    });
+                }
+            });
+
+            // 填入篩選清單選項
+            const filterMap = {
+                '電腦年分': 'flist_year',
+                '狀況': 'flist_status',
+                '型號': 'flist_model',
+                '新位置': 'flist_loc'
+            };
+            
+            Object.keys(filterMap).forEach(field => {
+                const listElement = document.getElementById(filterMap[field]);
+                if (listElement) {
+                    listElement.innerHTML = '';
+                    const sortedVals = Array.from(uniqueValues[field]).sort();
+                    sortedVals.forEach(val => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        listElement.appendChild(opt);
+                    });
+                }
+            });
+        }
+
+        function renderCards(records) {
+            resultsContainer.innerHTML = '';
+
+            records.forEach((record, index) => {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+
+                const propLabel = record['財產標籤'] || '-';
+                const dateVal   = record['異動日期或登記追蹤日期'] || record['異動日期'] || '-';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title" style="display: flex; align-items: center; gap: 0.8rem;">
+                            <input type="checkbox" class="record-checkbox" value="${propLabel}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-glow);">
+                            ${propLabel}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.8rem;">
+                            <button class="btn edit-card-btn" data-label="${propLabel}"
+                                style="padding:0.35rem 0.9rem; font-size:0.82rem; border-radius:8px;">
+                                ✏️ 編輯
+                            </button>
+                            <div class="card-date">${dateVal}</div>
+                        </div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">狀況</span>
+                            <span class="info-val">${record['狀況'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">電腦年分</span>
+                            <span class="info-val">${record['電腦年分'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">型號</span>
+                            <span class="info-val">${record['型號'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">其他</span>
+                            <span class="info-val">${record['其他'] || '-'}</span>
+                        </div>
+
+                        <div class="info-item" style="margin-top:0.8rem;">
+                            <span class="info-label text-success">新保管人</span>
+                            <span class="info-val" style="color:var(--success);">${record['新保管人'] || '-'}</span>
+                        </div>
+                        <div class="info-item" style="margin-top:0.8rem;">
+                            <span class="info-label text-success">新位置</span>
+                            <span class="info-val">${record['新位置'] || '-'}</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">原保管人</span>
+                            <span class="info-val" style="opacity:0.7;">${record['原保管人'] || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">原使用處室或位置</span>
+                            <span class="info-val" style="opacity:0.7;">${record['原使用處室或位置'] || '-'}</span>
+                        </div>
+
+                        ${record['備註1'] ? `
+                        <div class="info-item full-width" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border);">
+                            <span class="info-label">備註1</span>
+                            <span class="info-val">${record['備註1']}</span>
+                        </div>` : ''}
+                        ${record['備註2'] ? `
+                        <div class="info-item full-width">
+                            <span class="info-label">備註2</span>
+                            <span class="info-val">${record['備註2']}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+                resultsContainer.appendChild(card);
+
+                // 勾選變色
+                const cb = card.querySelector('.record-checkbox');
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        card.style.borderColor = 'var(--danger)';
+                        card.style.backgroundColor = 'rgba(255, 59, 48, 0.08)';
+                        card.style.boxShadow = '0 0 0 2px rgba(255, 59, 48, 0.15), var(--shadow-md)';
+                    } else {
+                        card.style.borderColor = 'rgba(0,0,0,0.05)';
+                        card.style.backgroundColor = 'var(--bg-card)';
+                        card.style.boxShadow = 'var(--shadow-md)';
+                    }
+                });
+
+                // 編輯按鈕
+                card.querySelector('.edit-card-btn').addEventListener('click', function() {
+                    const lbl = this.dataset.label;
+                    const rec = globalData.find(r => r['財產標籤'] === lbl);
+                    if (rec) openModal('update', rec);
+                });
+            });
+        }
+
+        function handleSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            const isQueryEmpty = query === '' || query === '314010103-';
+            
+            const filterYearVal = document.getElementById('filterYear').value;
+            const filterStatusVal = document.getElementById('filterStatus').value;
+            const filterModelVal = document.getElementById('filterModel').value;
+            const filterLocationVal = document.getElementById('filterLocation').value;
+
+            if (isQueryEmpty && !filterYearVal && !filterStatusVal && !filterModelVal && !filterLocationVal) {
+                resultsContainer.innerHTML = '';
+                notFoundArea.style.display = 'none';
+                document.getElementById('filterCount').style.display = 'none';
+                return;
+            }
+
+            const matches = globalData.filter(row => {
+                const label = (row['財產標籤'] || '').toLowerCase();
+                const matchQuery = isQueryEmpty || label.includes(query);
+                const matchYear = !filterYearVal || row['電腦年分'] === filterYearVal;
+                const matchStatus = !filterStatusVal || row['狀況'] === filterStatusVal;
+                const matchModel = !filterModelVal || row['型號'] === filterModelVal;
+                const matchLocation = !filterLocationVal || row['新位置'] === filterLocationVal;
+                
+                return matchQuery && matchYear && matchStatus && matchModel && matchLocation;
+            });
+
+            if (matches.length > 0) {
+                notFoundArea.style.display = 'none';
+                document.getElementById('filterCount').style.display = 'block';
+                document.getElementById('filterCount').textContent = `符合: ${matches.length} 筆`;
+                renderCards(matches);
+            } else {
+                resultsContainer.innerHTML = '';
+                notFoundArea.style.display = 'flex';
+                document.getElementById('filterCount').style.display = 'none';
+                
+                // set default labal value on not found
+                const rawVal = searchInput.value.trim();
+                let defLabel = '314010103-';
+                if(rawVal.startsWith('314010103-')) {
+                    defLabel = rawVal;
+                } else if(rawVal.length > 0) {
+                    defLabel = '314010103-' + rawVal;
+                }
+                document.getElementById('f_label').value = defLabel;
+            }
+        }
+
+        searchInput.addEventListener('input', handleSearch);
+        document.getElementById('filterYear').addEventListener('input', handleSearch);
+        document.getElementById('filterStatus').addEventListener('input', handleSearch);
+        document.getElementById('filterModel').addEventListener('input', handleSearch);
+        document.getElementById('filterLocation').addEventListener('input', handleSearch);
+
+        // ── Modal Logic ──────────────────────────────────────────
+        function _todayStr() {
+            const off = (new Date()).getTimezoneOffset() * 60000;
+            return (new Date(Date.now() - off)).toISOString().slice(0, 10);
+        }
+
+        function _setField(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.value = val || '';
+        }
+
+        function openModal(mode = 'add', record = null) {
+            currentEditMode  = mode;
+            currentEditLabel = record ? record['財產標籤'] : null;
+
+            document.getElementById('modalTitle').textContent =
+                mode === 'update' ? '編輯主機財產登記' : '新增主機財產登記';
+
+            const fLabel = document.getElementById('f_label');
+
+            if (mode === 'update' && record) {
+                // 預填資料
+                fLabel.value    = record['財產標籤'] || '';
+                fLabel.readOnly = true;
+                fLabel.style.opacity = '0.7';
+                _setField('f_date',      record['異動日期或登記追蹤日期'] || record['異動日期'] || _todayStr());
+                _setField('f_year',      record['電腦年分']);
+                _setField('f_status',    record['狀況']);
+                _setField('f_model',     record['型號']);
+                _setField('f_other',     record['其他']);
+                _setField('f_newkeeper', record['新保管人']);
+                _setField('f_newloc',    record['新位置']);
+                _setField('f_oldkeeper', record['原保管人']);
+                _setField('f_oldloc',    record['原使用處室或位置']);
+                _setField('f_note1',     record['備註1']);
+                _setField('f_note2',     record['備註2']);
+            } else {
+                // 清空表單
+                fLabel.readOnly = false;
+                fLabel.style.opacity = '1';
+                document.getElementById('addForm').reset();
+                _setField('f_date', _todayStr());
+                const rawVal = searchInput.value.trim();
+                let defLabel = '314010103-';
+                if (rawVal.startsWith('314010103-')) defLabel = rawVal;
+                else if (rawVal.length > 0) defLabel = '314010103-' + rawVal;
+                fLabel.value = defLabel;
+            }
+
+            addModal.classList.add('active');
+        }
+
+        function closeModal() {
+            addModal.classList.remove('active');
+        }
+
+        btnOpenAddForm.addEventListener('click', () => openModal('add'));
+        btnCloseModal.addEventListener('click', closeModal);
+        btnCancelModal.addEventListener('click', closeModal);
+        addModal.addEventListener('click', (e) => { if (e.target === addModal) closeModal(); });
+
+        btnSubmitForm.addEventListener('click', async () => {
+            const labelVal = document.getElementById('f_label').value.trim();
+            if (!labelVal) { alert('請輸入財產標籤'); return; }
+
+            if (GAS_URL === 'YOUR_GAS_WEB_APP_URL') {
+                alert('⚠️ 尚未設定 GAS_URL！\n請先部署 Google Apps Script 並貼上 Web App URL。');
+                return;
+            }
+
+            const payload = {
+                action: currentEditMode,
+                _token: GAS_TOKEN,
+                '財產標籤':            labelVal,
+                '異動日期或登記追蹤日期': document.getElementById('f_date').value,
+                '電腦年分':            document.getElementById('f_year').value,
+                '狀況':               document.getElementById('f_status').value,
+                '型號':               document.getElementById('f_model').value,
+                '其他':               document.getElementById('f_other').value,
+                '新保管人':            document.getElementById('f_newkeeper').value,
+                '新位置':             document.getElementById('f_newloc').value,
+                '原保管人':            document.getElementById('f_oldkeeper').value,
+                '原使用處室或位置':      document.getElementById('f_oldloc').value,
+                '備註1':              document.getElementById('f_note1').value,
+                '備註2':              document.getElementById('f_note2').value,
+            };
+
+            btnSubmitForm.disabled    = true;
+            btnSubmitForm.textContent = '送出中...';
+
+            try {
+                // no-cors：GAS 不回傳 CORS header，但 POST 確實會寫入
+                await fetch(GAS_URL, {
+                    method:  'POST',
+                    mode:    'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload)
+                });
+
+                // ── 樂觀更新：直接改記憶體，不重抓整張表（速度優先）──
+                if (currentEditMode === 'update') {
+                    const idx = globalData.findIndex(r => r['財產標籤'] === labelVal);
+                    if (idx !== -1) {
+                        Object.assign(globalData[idx], payload);
+                        globalData[idx]['異動日期或登記追蹤日期'] = payload['異動日期或登記追蹤日期'];
+                    }
+                } else {
+                    const newRec = { ...payload };
+                    newRec['異動日期或登記追蹤日期'] = payload['異動日期或登記追蹤日期'];
+                    globalData.push(newRec);
+                }
+
+                // 更新快取
+                try {
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: globalData, ts: Date.now() }));
+                } catch(_) {}
+
+                extractUniqueValues();
+                populateDatalists();
+                closeModal();
+                handleSearch();
+                showToast(currentEditMode === 'update' ? '✅ 資料已更新！' : '✅ 資料已新增！');
+
+            } catch (err) {
+                alert('❌ 送出失敗：' + err.message);
+            } finally {
+                btnSubmitForm.disabled    = false;
+                btnSubmitForm.textContent = '儲存資料';
+            }
+        });
+
+        // ── Toast 通知 ──────────────────────────────────────────
+        function showToast(msg) {
+            let toast = document.getElementById('_toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = '_toast';
+                toast.style.cssText = [
+                    'position:fixed', 'bottom:2rem', 'left:50%', 'transform:translateX(-50%) translateY(20px)',
+                    'background:#1d1d1f', 'color:#fff', 'padding:0.8rem 1.8rem',
+                    'border-radius:999px', 'font-size:0.95rem', 'font-weight:500',
+                    'box-shadow:0 8px 24px rgba(0,0,0,0.25)', 'z-index:9999',
+                    'opacity:0', 'transition:all 0.3s cubic-bezier(0.25,0.8,0.25,1)',
+                    'pointer-events:none'
+                ].join(';');
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+            }, 3000);
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
