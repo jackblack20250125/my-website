@@ -616,6 +616,7 @@
             HOST:PROPERTY_MGMT
         </div>
         <a href="../index.html" class="btn">返回首頁</a>
+        <button class="btn" id="btnDebug" style="font-size:0.8rem; opacity:0.6;">🔍 Debug</button>
     </header>
 
     <main>
@@ -1034,7 +1035,7 @@
             }
 
             const matches = globalData.filter(row => {
-                const label = (row['財產標籤'] || '').toLowerCase();
+                const label = (row['財產標籤'] || '').trim().toLowerCase();
                 const matchQuery = isQueryEmpty || label.includes(query);
                 const matchYear = !filterYearVal || row['電腦年分'] === filterYearVal;
                 const matchStatus = !filterStatusVal || row['狀況'] === filterStatusVal;
@@ -1232,6 +1233,19 @@
 
         // Initialize App
         document.addEventListener('DOMContentLoaded', init);
+
+        document.getElementById('btnDebug').addEventListener('click', () => {
+            if (!globalData.length) { alert('資料尚未載入'); return; }
+            const keys = Object.keys(globalData[0]);
+            const sample = globalData.slice(0, 3).map(r => r['財產標籤'] || r[keys[0]]);
+            const hasKey = keys.includes('財產標籤');
+            alert(
+                `共 ${globalData.length} 筆資料\n` +
+                `欄位名稱: ${JSON.stringify(keys)}\n\n` +
+                `有「財產標籤」欄位: ${hasKey ? '✅ 是' : '❌ 否（欄位名稱不符！）'}\n\n` +
+                `前3筆第一欄: ${JSON.stringify(sample)}`
+            );
+        });
     </script>
 </body>
 </html>
