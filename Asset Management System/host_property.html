@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -697,8 +697,9 @@
 
                     <div class="form-group">
                         <label class="form-label">狀況</label>
-                        <input type="text" list="dl_status" class="form-control" id="f_status">
-                        <datalist id="dl_status"></datalist>
+                        <select class="form-control" id="f_status">
+                            <option value="">-- 請選擇 --</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -918,6 +919,20 @@
                     });
                 }
             });
+
+            // 填入狀況 <select> 選項
+            const statusSelect = document.getElementById('f_status');
+            if (statusSelect && uniqueValues['狀況']) {
+                const currentVal = statusSelect.value;
+                statusSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
+                Array.from(uniqueValues['狀況']).sort().forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    statusSelect.appendChild(opt);
+                });
+                statusSelect.value = currentVal; // 保留已選的值
+            }
         }
 
         function renderCards(records) {
@@ -1168,7 +1183,7 @@
                 await fetch(GAS_URL, {
                     method:  'POST',
                     mode:    'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body:    JSON.stringify(payload)
                 });
 
