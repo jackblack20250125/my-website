@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路竹高中 ICRT 字幕播放器</title>
+    <meta name="description" content="路竹高中 ICRT 英語聽力大屏字幕機，支援 SBV 時間軸同步高亮">
+
+    <!-- React 18 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel (JSX in-browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            :root {
+                /* 校園明亮風 — 天藍色系 */
+                --background: 210 50% 97%;
+                --foreground: 222 84% 5%;
+                --card: 0 0% 100%;
+                --card-foreground: 222 84% 5%;
+                --primary: 210 100% 50%;
+                --primary-foreground: 0 0% 100%;
+                --secondary: 210 40% 94%;
+                --secondary-foreground: 222 47% 11%;
+                --muted: 210 40% 94%;
+                --muted-foreground: 215 16% 47%;
+                --accent: 38 100% 60%;
+                --accent-foreground: 0 0% 100%;
+                --border: 214 32% 91%;
+                --input: 214 32% 91%;
+                --ring: 210 100% 50%;
+                --radius: 0.75rem;
+            }
+            body {
+                @apply bg-background text-foreground antialiased overflow-hidden;
+                font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+            }
+        }
+
+        @layer components {
+            .btn {
+                @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                       disabled:opacity-50 disabled:pointer-events-none ring-offset-background
+                       h-10 py-2 px-5 shadow-sm active:scale-[0.97];
+            }
+            .btn-primary {
+                @apply bg-primary text-primary-foreground hover:brightness-110 shadow-md hover:shadow-lg;
+            }
+            .btn-outline {
+                @apply border border-input bg-white hover:bg-secondary hover:text-secondary-foreground;
+            }
+            .btn-ghost {
+                @apply hover:bg-secondary hover:text-secondary-foreground;
+            }
+            .input-field {
+                @apply flex h-10 w-full rounded-xl border border-input bg-white px-3 py-2 text-sm
+                       ring-offset-background placeholder:text-muted-foreground
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1
+                       disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition-all;
+            }
+            .card {
+                @apply rounded-2xl border border-border/50 bg-white shadow-sm;
+            }
+        }
+
+        /* custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* progress bar styling */
+        input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type="range"]::-webkit-slider-runnable-track { height: 6px; background: #e2e8f0; border-radius: 999px; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: hsl(210 100% 50%); border: 3px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            margin-top: -6px; cursor: pointer; transition: transform 0.15s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* fullscreen tweaks */
+        :fullscreen { background: hsl(210 50% 97%); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ── Lucide-style Icon Components ──
+        const PlayIcon = ({size = 22}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>;
+        const PauseIcon = ({size = 22}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
+        const RefreshIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>;
+        const FolderIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path><circle cx="14" cy="13" r="3"></circle><path d="m18.5 17.5-2.05-2.05"></path></svg>;
+        const FullscreenIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>;
+        const MusicIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;
+        const FileTextIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>;
+        const RadioIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path><circle cx="12" cy="12" r="2"></circle><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path></svg>;
+
+        const { useState, useEffect, useRef, useCallback } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // ── SBV Parser ──
+        function parseSBV(lines) {
+            const result = [];
+            let currentItem = null;
+            const timeRegex = /^(\d+):(\d{2}):(\d{2}\.\d{3}),(\d+):(\d{2}):(\d{2}\.\d{3})$/;
+
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) continue;
+
+                const match = line.match(timeRegex);
+                if (match) {
+                    if (currentItem && currentItem.text) result.push(currentItem);
+                    const startSeconds = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseFloat(match[3]);
+                    const endSeconds   = parseInt(match[4]) * 3600 + parseInt(match[5]) * 60 + parseFloat(match[6]);
+                    currentItem = { startTime: startSeconds, endTime: endSeconds, text: "" };
+                } else if (currentItem) {
+                    currentItem.text += (currentItem.text ? "<br>" : "") + line;
+                }
+            }
+            if (currentItem && currentItem.text) result.push(currentItem);
+            return result;
+        }
+
+        // ── Proportional Timestamp Estimation (fallback) ──
+        function estimateTimestamps(subs, duration) {
+            const PADDING_START = 6;
+            const PADDING_END = 4;
+            let actualDuration = Math.max(duration - PADDING_START - PADDING_END, duration * 0.5);
+            const totalChars = subs.reduce((sum, s) => sum + s.text.length, 0);
+            if (totalChars === 0) return subs;
+
+            let currentTime = PADDING_START;
+            return subs.map(item => {
+                const lineDuration = (item.text.length / totalChars) * actualDuration;
+                const newItem = { ...item, startTime: currentTime, endTime: currentTime + lineDuration - 0.15 };
+                currentTime += lineDuration;
+                return newItem;
+            });
+        }
+
+        // ── StatusBadge Component ──
+        function StatusBadge({ type, text }) {
+            const styles = {
+                error:   'bg-red-50 text-red-600 border-red-200',
+                success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                warning: 'bg-amber-50 text-amber-700 border-amber-200',
+                info:    'bg-sky-50 text-sky-700 border-sky-200',
+            };
+            return (
+                <div className={`card p-3 text-sm border ${styles[type] || styles.info} transition-all duration-300`}>
+                    {text}
+                </div>
+            );
+        }
+
+        // ══════════════════════════════════════════════
+        //  Main App Component
+        // ══════════════════════════════════════════════
+        function App() {
+            // ── State ──
+            const [audioList, setAudioList] = useState([]);
+            const [selectedAudio, setSelectedAudio] = useState("");
+            const [customAudio, setCustomAudio] = useState("1.mp3");
+            const [customSub, setCustomSub] = useState("1.txt");
+            const [subtitles, setSubtitles] = useState([]);
+            const [status, setStatus] = useState({ type: 'info', text: '歡迎使用！系統啟動後會自動掃描同資料夾內的音檔。' });
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [currentTime, setCurrentTime] = useState(0);
+            const [duration, setDuration] = useState(0);
+            const [isLoading, setIsLoading] = useState(false);
+
+            const audioRef = useRef(null);
+            const scrollRef = useRef(null);
+
+            // ── Directory Scan ──
+            const scanDirectory = useCallback(async () => {
+                setStatus({ type: 'info', text: '正在掃描資料夾…' });
+                try {
+                    const res = await fetch('./');
+                    if (!res.ok) throw new Error("伺服器回傳 " + res.status);
+                    const html = await res.text();
+
+                    const mp3Matches = [...html.matchAll(/href="([^"]+\.mp3)"/ig)];
+                    if (mp3Matches.length > 0) {
+                        const list = [...new Set(mp3Matches.map(m => decodeURIComponent(m[1])).filter(f => !f.startsWith('http')))];
+                        setAudioList(list);
+                        if (list.length > 0) {
+                            setSelectedAudio(list[0]);
+                            setCustomAudio(list[0]);
+                            setCustomSub(list[0].replace(/\.mp3$/i, '.txt'));
+                        }
+                        setStatus({ type: 'success', text: `掃描完成！找到 ${list.length} 個音檔，已自動填入。` });
+                    } else {
+                        throw new Error("沒有找到 .mp3 檔案連結");
+                    }
+                } catch (e) {
+                    console.warn("目錄掃描失敗:", e);
+                    setStatus({ type: 'warning', text: '伺服器未開放目錄瀏覽，請在下方手動輸入檔名。' });
+                    setAudioList([]);
+                }
+            }, []);
+
+            useEffect(() => { scanDirectory(); }, [scanDirectory]);
+
+            // ── Dropdown ──
+            const handleSelectChange = (e) => {
+                const f = e.target.value;
+                setSelectedAudio(f);
+                if (f !== "custom") {
+                    setCustomAudio(f);
+                    setCustomSub(f.replace(/\.mp3$/i, '.txt'));
+                }
+            };
+
+            // ── Load Data (core action) ──
+            const loadData = async () => {
+                if (!customAudio || !customSub) {
+                    setStatus({ type: 'error', text: '音檔名與字幕名不能為空！' });
+                    return;
+                }
+
+                setIsLoading(true);
+                audioRef.current.src = customAudio;
+                audioRef.current.load();
+                setSubtitles([]);
+                setStatus({ type: 'info', text: `正在載入字幕檔: ${customSub} …` });
+
+                try {
+                    const res = await fetch(customSub + '?v=' + Date.now());
+                    if (!res.ok) throw new Error(`找不到字幕檔 (HTTP ${res.status})，請確認檔案是否在同一資料夾。`);
+
+                    const text = await res.text();
+                    const lines = text.split(/\r?\n/);
+
+                    const isSBV = lines.slice(0, 15).some(l => /^\d+:\d{2}:\d{2}\.\d{3},\d+:\d{2}:\d{2}\.\d{3}$/.test(l.trim()));
+
+                    if (isSBV) {
+                        const parsed = parseSBV(lines);
+                        if (parsed.length === 0) throw new Error("SBV 解析失敗，內容格式異常。");
+                        setSubtitles(parsed);
+                        setStatus({ type: 'success', text: `✅ 成功讀取 SBV 時間軸！共 ${parsed.length} 句，可以精準同步播放。` });
+                    } else {
+                        // Fallback: 純文字，等 duration 後再估算
+                        const plainSubs = lines.filter(l => l.trim()).map(l => ({ text: l.trim(), startTime: 0, endTime: 0 }));
+                        if (plainSubs.length === 0) throw new Error("字幕檔內容為空。");
+                        setSubtitles(plainSubs);
+                        setStatus({ type: 'warning', text: `載入純文字字幕 ${plainSubs.length} 行，將依音檔長度自動估算時間軸。` });
+                    }
+                } catch (e) {
+                    setStatus({ type: 'error', text: e.message });
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            // ── Audio Duration → re-estimate if needed ──
+            const handleLoadedMetadata = (e) => {
+                const dur = e.target.duration;
+                setDuration(dur);
+
+                // 如果字幕沒有時間軸 (全部 startTime=0)，用估算法
+                if (subtitles.length > 0 && subtitles.every(s => s.startTime === 0 && s.endTime === 0) && dur > 0 && isFinite(dur)) {
+                    const estimated = estimateTimestamps(subtitles, dur);
+                    setSubtitles(estimated);
+                    setStatus({ type: 'success', text: `已依照音檔長度 (${Math.floor(dur)}秒) 估算時間軸。` });
+                }
+            };
+
+            // ── Playback Events ──
+            const handleTimeUpdate = () => setCurrentTime(audioRef.current.currentTime);
+            const togglePlay = () => {
+                if (audioRef.current.paused) { audioRef.current.play(); }
+                else { audioRef.current.pause(); }
+            };
+            const handleSeek = (e) => {
+                const t = parseFloat(e.target.value);
+                audioRef.current.currentTime = t;
+                setCurrentTime(t);
+            };
+            const formatTime = (s) => {
+                if (isNaN(s)) return "0:00";
+                return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+            };
+
+            // ── Active subtitle index ──
+            const activeIndex = subtitles.findIndex(s => currentTime >= s.startTime && currentTime <= s.endTime);
+            const displayIndex = activeIndex !== -1
+                ? activeIndex
+                : subtitles.reduce((acc, curr, idx) => (currentTime >= curr.endTime ? idx : acc), -1);
+
+            // ── Auto-scroll ──
+            useEffect(() => {
+                if (displayIndex < 0 || !scrollRef.current) return;
+                const el = document.getElementById(`line-${displayIndex}`);
+                if (el) {
+                    scrollRef.current.scrollTo({
+                        top: el.offsetTop - scrollRef.current.offsetHeight / 2 + el.offsetHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }, [displayIndex]);
+
+            // ── Fullscreen ──
+            const toggleFullScreen = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen();
+                }
+            };
+
+            // ══════════════════════════════════════════════
+            //  Render
+            // ══════════════════════════════════════════════
+            return (
+                <div className="flex h-screen w-full p-4 md:p-6 gap-5 flex-col md:flex-row">
+
+                    {/* ─── Left Panel ─── */}
+                    <aside className="w-full md:w-80 lg:w-96 flex flex-col gap-4 shrink-0">
+
+                        {/* Header Card */}
+                        <div className="card p-6 border-t-4 border-t-primary">
+                            <div className="flex items-center gap-3 mb-1">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <RadioIcon />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold tracking-tight text-foreground">路竹高中</h1>
+                                    <p className="text-xs text-muted-foreground -mt-0.5">ICRT 大屏動態字幕機</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Control Card */}
+                        <div className="card p-5 space-y-4 flex-1 overflow-y-auto">
+
+                            {/* Dropdown — scanned files */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <FolderIcon /> 自動掃描清單
+                                </label>
+                                <select
+                                    className="input-field"
+                                    value={selectedAudio}
+                                    onChange={handleSelectChange}
+                                    disabled={audioList.length === 0}
+                                >
+                                    <option value="custom">✏️ 手動輸入檔名…</option>
+                                    {audioList.map((f, i) => <option key={i} value={f}>{f}</option>)}
+                                </select>
+                                {audioList.length === 0 && (
+                                    <p className="text-xs text-muted-foreground">伺服器未開放掃描，請於下方手動輸入</p>
+                                )}
+                            </div>
+
+                            <hr className="border-border" />
+
+                            {/* Manual Input */}
+                            <div className="space-y-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                        <MusicIcon /> 音檔名稱
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={customAudio}
+                                        onChange={e => { setCustomAudio(e.target.value); setSelectedAudio("custom"); }}
+                                        placeholder="例如: 20260320NB.mp3"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                        <FileTextIcon /> 字幕檔名稱 (.txt)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={customSub}
+                                        onChange={e => { setCustomSub(e.target.value); setSelectedAudio("custom"); }}
+                                        placeholder="例如: 20260320NB.txt"
+                                    />
+                                </div>
+                                <div className="text-xs text-amber-600 bg-amber-50 p-2.5 rounded-xl border border-amber-200 leading-relaxed">
+                                    💡 請將 <code className="font-mono">.sbv</code> 字幕副檔名改為 <code className="font-mono">.txt</code> 後上傳，以避免學校伺服器阻擋未知格式。
+                                </div>
+                            </div>
+
+                            {/* Load Button */}
+                            <button
+                                className="btn btn-primary w-full h-11 text-base"
+                                onClick={loadData}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        載入中…
+                                    </span>
+                                ) : (
+                                    <><RefreshIcon /> 載入並開始</>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Status Message */}
+                        <StatusBadge type={status.type} text={status.text} />
+                    </aside>
+
+                    {/* ─── Right Panel ─── */}
+                    <main className="flex-1 flex flex-col gap-4 overflow-hidden min-w-0">
+
+                        {/* Top bar */}
+                        <div className="flex justify-between items-center shrink-0">
+                            <div className="text-sm text-muted-foreground">
+                                {subtitles.length > 0 && `共 ${subtitles.length} 句字幕`}
+                            </div>
+                            <button className="btn btn-outline h-8 text-xs px-3 gap-1.5" onClick={toggleFullScreen}>
+                                <FullscreenIcon /> 全螢幕
+                            </button>
+                        </div>
+
+                        {/* Subtitle Scroll Area (KTV effect) */}
+                        <div
+                            ref={scrollRef}
+                            className="card flex-1 bg-white overflow-y-auto relative shadow-md border-slate-200"
+                        >
+                            {/* Empty state */}
+                            {subtitles.length === 0 && (
+                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground/40 gap-4 p-8">
+                                    <svg className="w-20 h-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/>
+                                        <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                                        <path d="m3 15 2 2 4-4"/>
+                                    </svg>
+                                    <p className="text-lg font-medium">等待載入字幕</p>
+                                    <p className="text-sm">選擇音檔與字幕後，按下「載入並開始」</p>
+                                </div>
+                            )}
+
+                            {/* Subtitle Lines */}
+                            <div className="py-24 md:py-36 px-6 md:px-16">
+                                {subtitles.map((line, index) => {
+                                    const isActive = index === displayIndex;
+                                    const isPlayed = index < displayIndex;
+
+                                    return (
+                                        <motion.div
+                                            key={index}
+                                            id={`line-${index}`}
+                                            initial={false}
+                                            animate={{
+                                                opacity: isActive ? 1 : isPlayed ? 0.35 : 0.18,
+                                                scale: isActive ? 1.04 : 1,
+                                            }}
+                                            transition={{ duration: 0.4, type: "spring", stiffness: 120, damping: 20 }}
+                                            className={`text-center py-3 px-3 my-1.5 rounded-xl cursor-pointer transition-colors ${
+                                                isActive
+                                                    ? 'text-primary font-bold text-3xl md:text-[2.75rem] leading-snug drop-shadow-sm'
+                                                    : 'text-slate-500 font-medium text-2xl md:text-4xl leading-snug hover:bg-sky-50/60'
+                                            }`}
+                                            onClick={() => {
+                                                audioRef.current.currentTime = line.startTime;
+                                                audioRef.current.play();
+                                            }}
+                                            dangerouslySetInnerHTML={{ __html: line.text }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Player Controls */}
+                        <div className="card shrink-0 p-4 md:p-5 bg-white shadow-md flex flex-col gap-3">
+                            <audio
+                                ref={audioRef}
+                                onTimeUpdate={handleTimeUpdate}
+                                onPlay={() => setIsPlaying(true)}
+                                onPause={() => setIsPlaying(false)}
+                                onLoadedMetadata={handleLoadedMetadata}
+                                className="hidden"
+                            />
+
+                            {/* Progress bar */}
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono text-muted-foreground w-10 text-right shrink-0">{formatTime(currentTime)}</span>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max={duration || 100}
+                                    step="0.1"
+                                    value={currentTime}
+                                    onChange={handleSeek}
+                                    className="flex-1 cursor-pointer"
+                                />
+                                <span className="text-xs font-mono text-muted-foreground w-10 shrink-0">{formatTime(duration)}</span>
+                            </div>
+
+                            {/* Play button */}
+                            <div className="flex justify-center">
+                                <button
+                                    className="h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-40"
+                                    onClick={togglePlay}
+                                    disabled={subtitles.length === 0}
+                                >
+                                    {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // ── Mount ──
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

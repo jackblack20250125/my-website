@@ -1,0 +1,222 @@
+// ==========================================
+// 設定區
+// ==========================================
+const FOLDER_ID = "1IhBlwHWf6IVvPy0zVxxLlcyId3Hsnhl4"; // 請確認簽名檔資料夾 ID
+
+// ==========================================
+// 核心路由 (API Router)
+// ==========================================
+
+function doGet(e) {
+  return ContentService.createTextOutput("API Service is running.");
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000); // 防止多個請求同時寫入造成衝突
+
+  try {
+    var req = JSON.parse(e.postData.contents);
+    var action = req.action;
+    var result = {};
+
+    if (action === "search") {
+      result = getItemData(req.barcode);
+    } else if (action === "submit") {
+      result = submitTransaction(req);
+    } else if (action === "add") {
+      result = addNewItem(req);
+    } else {
+      result = { success: false, error: "Unknown action" };
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ==========================================
+// 邏輯功能區
+// ==========================================
+
+function getItemData(barcode) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Items");
+  const activeLoansSheet = getOrCreateActiveLoansSheet(ss);
+  
+  if (!sheet) return { found: false, error: "找不到 Items 分頁" };
+  
+  // 取得目前借出此條碼的所有人名單
+  let activeUsers = [];
+  const activeData = activeLoansSheet.getDataRange().getValues();
+  // 已將 SystemId 插在 Barcode(1) 和 Name(3) 之間，目前結構為： 
+  // ['BorrowTime', 'Barcode', 'SystemId', 'Name', 'User', 'Identity', 'Qty']
+  for (let i = 1; i < activeData.length; i++) {
+    // 物品編號維持在索引 1
+    if (String(activeData[i][1]).trim() === String(barcode).trim()) {
+      // User 名字延後到索引 4
+      activeUsers.push(String(activeData[i][4]).trim()); 
+    }
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(barcode)) {
+      return {
+        found: true,
+        row: i + 1,
+        barcode: data[i][0],    // A
+        propId: data[i][1],     // B
+        systemId: data[i][2],   // C (這是新增的系統編號欄位)
+        name: data[i][3],       // D 
+        brand: data[i][4],      // E 
+        model: data[i][5],      // F 
+        accessories: data[i][6],// G 
+        category: data[i][8],   // I 
+        stock: data[i][10],     // K (對應 Items 中的庫存數量，因插入欄位退格為 10)
+        status: data[i][12],    // M (對應 Items 中的目前狀態，因插入欄位退格為 12)
+        activeBorrowers: activeUsers 
+      };
+    }
+  }
+  return { found: false };
+}
+
+function getOrCreateActiveLoansSheet(ss) {
+  let sheet = ss.getSheetByName('ActiveLoans');
+  if (!sheet) {
+    sheet = ss.insertSheet('ActiveLoans');
+    // 在原本的 Barcode 及 Name 之間插入 SystemId
+    sheet.appendRow(['BorrowTime', 'Barcode', 'SystemId', 'Name', 'User', 'Identity', 'Qty']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f3f3f3');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function submitTransaction(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let logSheet = ss.getSheetByName("Logs");
+  const itemSheet = ss.getSheetByName("Items");
+  const activeLoansSheet = getOrCreateActiveLoansSheet(ss);
+  
+  if (!logSheet) {
+    logSheet = ss.insertSheet("Logs");
+    // 將原本 Empty1 取代寫為 SystemId
+    logSheet.appendRow(['Timestamp', 'Mode', 'Barcode', 'PropId', 'SystemId', 'Qty', 'User', 'Identity', 'Empty2', 'Empty3', 'Empty4', 'Status', 'Empty5', 'Notes', 'SignatureUrl']);
+  }
+  
+  try {
+    let signatureUrl = "";
+    if (p.signatureData && p.signatureData.length > 100) {
+      signatureUrl = saveSignature(p.signatureData, p.userName);
+    }
+    
+    let qty = parseInt(p.qty) || 1;
+
+    // 寫入日誌 Logs
+    logSheet.appendRow([
+      new Date(), p.mode, p.barcode ? "'" + p.barcode : "", p.propId ? "'" + p.propId : "", p.systemId ? "'" + p.systemId : "", qty, p.userName, p.identity, 
+      "", "", "", p.itemStatus, "", p.notes || "", signatureUrl
+    ]);
+
+    if (p.itemRow) {
+      // 讀取 Items 時的庫存欄位
+      const stockRange = itemSheet.getRange(p.itemRow, 11); 
+      const currentStock = parseInt(stockRange.getValue()) || 0;
+      
+      if (p.mode.includes("借用") || p.mode.includes("領用")) {
+        if (p.category === "耗材" || currentStock > 0) {
+            stockRange.setValue(Math.max(0, currentStock - qty));
+        }
+        
+        if (p.mode.includes("借用")) {
+            // 寫入 ActiveLoans 時，嚴格依序插入
+            activeLoansSheet.appendRow([
+                new Date(),
+                p.barcode ? "'" + p.barcode : "",          // 索引 1：物品編號
+                p.systemId ? "'" + p.systemId : "",   // 索引 2：系統編號
+                p.name || '',       // 索引 3：名稱
+                p.userName,         // 索引 4：借入者
+                p.identity,         // 索引 5：借入者身分
+                qty                 // 索引 6：數量
+            ]);
+        }
+        
+      } else if (p.mode.includes("歸還")) {
+        // 歸還後復原數量
+        if (p.category === "耗材" || currentStock >= 0) {
+            stockRange.setValue(currentStock + qty);
+        }
+        // 更新物品狀態 (M 欄位)
+        if (p.itemStatus) {
+            itemSheet.getRange(p.itemRow, 13).setValue(p.itemStatus); 
+        }
+        
+        // 進行自 ActiveLoans 刪除紀錄
+        const activeData = activeLoansSheet.getDataRange().getValues();
+        let targetUser = p.returnTargetUser ? String(p.returnTargetUser).trim() : null;
+        
+        for (let i = activeData.length - 1; i >= 1; i--) {
+          // 與寫入順序對應抓取
+          let rowBarcode = String(activeData[i][1]).trim(); 
+          let rowUser = String(activeData[i][4]).trim();
+          let isSameBarcode = rowBarcode === String(p.barcode).trim();
+          
+          if (isSameBarcode) {
+            if (targetUser && rowUser === targetUser) {
+              activeLoansSheet.deleteRow(i + 1);
+              break;
+            } else if (!targetUser) {
+              throw new Error("安全防護：未指定歸還人，無法自動銷帳。請重新整理頁面後，於選單中選擇歸還人。");
+            }
+          }
+        }
+      }
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function addNewItem(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Items");
+  if (!sheet) return { success: false, error: "找不到 Items 分頁" };
+
+  try {
+    // 【修改】將 p.systemId 放在 p.propId 之後
+    sheet.appendRow([
+      p.barcode ? "'" + p.barcode : "", 
+      p.propId ? "'" + p.propId : "", 
+      p.systemId ? "'" + p.systemId : "", 
+      p.name, p.brand, p.model, p.accessories,
+      p.usageType, p.category, p.totalQty, p.remainQty, 
+      p.location, p.status, p.notes
+    ]);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function saveSignature(base64Data, userName) {
+  try {
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const contentType = base64Data.substring(5, base64Data.indexOf(';'));
+    const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
+    const blob = Utilities.newBlob(bytes, contentType, `Sign_${userName}_${Utilities.formatDate(new Date(), "GMT+8", "yyyyMMdd_HHmmss")}.png`);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return file.getUrl();
+  } catch(e) {
+    return "Error saving signature: " + e.toString();
+  }
+}

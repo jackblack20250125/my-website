@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICRT 英語聽力播放器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --highlight-color: #ffeb3b;
+            --played-color: #888888;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止整個網頁出現捲軸，只讓字幕區捲動 */
+        }
+
+        /* 頂部控制列 */
+        .header-controls {
+            padding: 1rem;
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        /* 底部播放器 */
+        .player-container {
+            padding: 1rem;
+            background-color: #1e1e1e;
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        audio {
+            width: 100%;
+            outline: none;
+        }
+
+        /* 字幕捲動區 */
+        .subtitles-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2rem 10%;
+            scroll-behavior: smooth;
+        }
+
+        .subtitle-line {
+            font-size: 2.5rem; /* 大字體適合大屏 */
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* 已播過的字 */
+        .subtitle-line.played {
+            opacity: 0.7;
+            color: var(--played-color);
+        }
+
+        /* 正在播放的字 */
+        .subtitle-line.active {
+            opacity: 1;
+            color: var(--highlight-color);
+            font-weight: 700;
+            transform: scale(1.05); /* 微微放大突出顯示 */
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+
+        /* 設定 GAS 網址的區塊 */
+        #settings-panel {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部控制列 -->
+    <div class="header-controls d-flex gap-3 align-items-center justify-content-between">
+        <div class="d-flex gap-2 align-items-center flex-grow-1">
+            <h5 class="mb-0 text-white text-nowrap">📻 ICRT 播放器</h5>
+            <select class="form-select w-auto" id="audioSelect">
+                <option value="">請選擇要播放的音檔...</option>
+                <!-- 選項會從 GAS 載入 -->
+            </select>
+            <button class="btn btn-primary" id="btnLoad">讀取資料</button>
+            <span id="statusMessage" class="ms-2 text-warning small">若沒有選項，請先設定您的 GAS 網址</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-light btn-sm" onclick="toggleSettings()">⚙️ 設定 GAS 網址</button>
+            <button class="btn btn-outline-light btn-sm" onclick="toggleFullScreen()">⛶ 全螢幕</button>
+        </div>
+    </div>
+
+    <!-- 設定面板 (預設隱藏) -->
+    <div id="settings-panel" class="bg-dark p-3 border-bottom border-secondary">
+        <div class="container">
+            <label class="form-label text-white">Google Apps Script Web App URL:</label>
+            <div class="input-group">
+                <input type="text" id="gasUrlInput" class="form-control" placeholder="請貼上部署好的 GAS 網址 (https://script.google.com/macros/s/.../exec)">
+                <button class="btn btn-success" onclick="saveGasUrl()">儲存</button>
+            </div>
+            <div class="form-text text-secondary mt-1">您部署的 icrt_gas_api.js 網路應用程式網址。系統會自動記憶在瀏覽器中。</div>
+        </div>
+    </div>
+
+    <!-- 字幕顯示區 -->
+    <div class="subtitles-container" id="subtitlesBox">
+        <div class="subtitle-line active">歡迎使用 ICRT 播放器 👋</div>
+        <div class="subtitle-line">請先選擇音檔，點擊「讀取資料」載入字幕。</div>
+    </div>
+
+    <!-- 底部播放器 -->
+    <div class="player-container">
+        <audio id="audioPlayer" controls>
+            <source src="" type="audio/mpeg">
+            您的瀏覽器不支援音樂播放。
+        </audio>
+    </div>
+
+    <script>
+        // --- 核心變數 ---
+        let gasUrl = localStorage.getItem('icrtGasUrl') || '';
+        let audioList = [];
+        let subtitlesData = []; // 儲存 {text, startTime, endTime}
+        let isDataLoaded = false;
+        let isSyncing = false; // 標記是否已經計算過時間軸
+
+        // DOM 元素
+        const audioSelect = document.getElementById('audioSelect');
+        const btnLoad = document.getElementById('btnLoad');
+        const statusMessage = document.getElementById('statusMessage');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const subtitlesBox = document.getElementById('subtitlesBox');
+        const gasUrlInput = document.getElementById('gasUrlInput');
+        const settingsPanel = document.getElementById('settings-panel');
+
+        // 初始化
+        window.onload = () => {
+            if (gasUrl) {
+                gasUrlInput.value = gasUrl;
+                fetchAudioList(); // 自動載入下拉選單
+            } else {
+                toggleSettings();
+            }
+        };
+
+        // --- 設定面板切換 ---
+        function toggleSettings() {
+            settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveGasUrl() {
+            const url = gasUrlInput.value.trim();
+            if (url) {
+                gasUrl = url;
+                localStorage.setItem('icrtGasUrl', gasUrl);
+                alert("已儲存 GAS 網址！");
+                toggleSettings();
+                fetchAudioList();
+            } else {
+                alert("請輸入有效的網址");
+            }
+        }
+
+        // --- 1. 取得音檔清單 ---
+        async function fetchAudioList() {
+            if (!gasUrl) return;
+            statusMessage.textContent = '載入播放清單中...';
+            statusMessage.className = 'ms-2 text-info small';
+
+            try {
+                // 使用 JSONP 或是 CORS 取得資料
+                const response = await fetch(`${gasUrl}?action=getAudioList&sheet=音訊工作表`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    audioList = result.data;
+                    renderAudioSelect();
+                    statusMessage.textContent = '讀取完成。請選擇並點擊讀取資料。';
+                    statusMessage.className = 'ms-2 text-success small';
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                statusMessage.textContent = '載入清單失敗: ' + error.message;
+                statusMessage.className = 'ms-2 text-danger small';
+            }
+        }
+
+        function renderAudioSelect() {
+            audioSelect.innerHTML = '<option value="">請選擇要播放的音檔...</option>';
+            audioList.forEach((item, index) => {
+                const opt = document.createElement('option');
+                opt.value = index; // 用 index 尋找 url
+                opt.textContent = item.title;
+                audioSelect.appendChild(opt);
+            });
+        }
+
+        // 解析 SBV 格式時間軸
+        function parseSBV(lines) {
+            let result = [];
+            let currentItem = null;
+            // SBV 時間軸正則表示式 (例如: 0:00:17.040,0:00:21.440)
+            const timeRegex = /^(\d+):(\d{2}):(\d{2}\.\d{3}),(\d+):(\d{2}):(\d{2}\.\d{3})$/; 
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line) continue;
+
+                let match = line.match(timeRegex);
+                if (match) {
+                    if (currentItem && currentItem.text) {
+                        result.push(currentItem);
+                    }
+                    
+                    let startSeconds = parseInt(match[1])*3600 + parseInt(match[2])*60 + parseFloat(match[3]);
+                    let endSeconds = parseInt(match[4])*3600 + parseInt(match[5])*60 + parseFloat(match[6]);
+                    
+                    currentItem = {
+                        startTime: startSeconds,
+                        endTime: endSeconds,
+                        text: ""
+                    };
+                } else {
+                    if (currentItem) {
+                        currentItem.text += (currentItem.text ? "<br>" : "") + line;
+                    }
+                }
+            }
+            if (currentItem && currentItem.text) {
+                result.push(currentItem);
+            }
+            return result;
+        }
+
+        // --- 2. 點擊「讀取資料」(音檔+字幕) ---
+        btnLoad.addEventListener('click', async () => {
+            const selectedIndex = audioSelect.value;
+            if (selectedIndex === "") {
+                alert('請先選擇一個音檔');
+                return;
+            }
+
+            const selectedAudio = audioList[selectedIndex];
+            
+            // 將 Google Drive 連結轉換為可以直接播放的格式
+            let audioUrl = selectedAudio.url;
+            const driveMatch = audioUrl.match(/d\/([a-zA-Z0-9_-]+)/);
+            if (driveMatch && driveMatch[1]) {
+                audioUrl = `https://docs.google.com/uc?export=download&id=${driveMatch[1]}`;
+            }
+            
+            audioPlayer.src = audioUrl;
+            audioPlayer.load(); // 加入這行強制瀏覽器重新抓取音檔
+            
+            // 讀取字幕
+            statusMessage.textContent = '正在下載字幕檔...';
+            statusMessage.className = 'ms-2 text-info small';
+            btnLoad.disabled = true;
+
+            try {
+                // 這裡預設字幕的工作表名稱為 "播放的字幕檔工作表" 或 "字幕"
+                // 使用者剛才說 "播放的字幕檔工作表，則是直接貼上字幕"
+                const response = await fetch(`${gasUrl}?action=getSubtitles&sheet=播放的字幕檔工作表`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const lines = result.data;
+                    if (lines.length === 0) {
+                        subtitlesBox.innerHTML = '<div class="subtitle-line text-danger">字幕檔為空，請確認 Google Sheet 中是否有資料。</div>';
+                        throw new Error('字幕為空');
+                    }
+                    
+                    // 判斷是否為 SBV 格式 (檢查前 10 行是否有時間軸)
+                    const isSBV = lines.slice(0, 10).some(line => /^\d+:\d{2}:\d{2}\.\d{3},\d+:\d{2}:\d{2}\.\d{3}$/.test(line.trim()));
+                    
+                    if (isSBV) {
+                        subtitlesData = parseSBV(lines);
+                        renderSubtitles(subtitlesData);
+                        
+                        statusMessage.textContent = '成功讀取時間軸！可以開始準確同步播放。';
+                        statusMessage.className = 'ms-2 text-success small';
+                        
+                        isDataLoaded = true;
+                        isSyncing = true; // 已經有精確時間軸，不需要估算長度
+                    } else {
+                        // 暫時將字串存起來，等音檔 loadedmetadata 後再計算估算時間
+                        subtitlesData = lines.map(line => ({ text: line, startTime: 0, endTime: 0 }));
+                        renderSubtitles(subtitlesData);
+                        
+                        statusMessage.textContent = '載入純文字字幕！等待音檔分析並估算時間...';
+                        statusMessage.className = 'ms-2 text-warning small';
+                        
+                        isDataLoaded = true;
+                        isSyncing = false; // 等待音檔載入完成後計算時間
+                    }
+
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                statusMessage.textContent = '載入字幕失敗: ' + error.message + ' (請確認您的字表名稱是否為"播放的字幕檔工作表")';
+                statusMessage.className = 'ms-2 text-danger small';
+            } finally {
+                btnLoad.disabled = false;
+            }
+        });
+
+        // --- 3. 音頻事件處理與時間軸估算演算法 ---
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            if (!isDataLoaded || isSyncing) return;
+
+            const duration = audioPlayer.duration;
+            if (!duration || isNaN(duration) || duration === Infinity) {
+                statusMessage.textContent = '無法取得音檔總長度，可能無法自動同步。請嘗試點擊播放按鈕。';
+                return;
+            }
+            
+            calculateTimestamps(duration);
+            statusMessage.textContent = '時間軸估算完成！可以開始播放。';
+            statusMessage.className = 'ms-2 text-success small';
+        });
+
+        // 備用: 如果一開始 duration 是 NaN (Drive 音訊常有這問題)，在 timeupdate 或 playing 時再取得
+        audioPlayer.addEventListener('playing', () => {
+             if (isDataLoaded && !isSyncing && audioPlayer.duration > 0 && audioPlayer.duration !== Infinity) {
+                 calculateTimestamps(audioPlayer.duration);
+                 statusMessage.textContent = '時間軸估算完成！播放中...';
+                 statusMessage.className = 'ms-2 text-success small';
+             }
+        });
+
+        function calculateTimestamps(duration) {
+            // 字數比例分配法
+            const PADDING_START = 8; // 開頭留出8秒前奏 (ICRT 新聞有時有過場音樂)
+            const PADDING_END = 5;   // 結尾留出5秒
+            
+            // 實際用來唸稿的時間
+            let actualDuration = duration - PADDING_START - PADDING_END;
+            if(actualDuration <= 0) actualDuration = duration; // 假如音檔太短，防呆
+            
+            let totalChars = 0;
+            // 算總字元數
+            subtitlesData.forEach(item => {
+                totalChars += item.text.length;
+            });
+
+            if(totalChars === 0) return;
+
+            let currentTime = PADDING_START;
+            
+            subtitlesData.forEach((item, index) => {
+                // 這句話應該分配到多少秒 (依賴這句話的字數在全部字數中的比例)
+                // 給句與句之間留 0.2 秒的停頓感
+                let lineDuration = (item.text.length / totalChars) * actualDuration;
+                
+                item.startTime = currentTime;
+                item.endTime = currentTime + lineDuration - 0.2; 
+                currentTime += lineDuration; // 下一句的起點
+
+                // 把時間綁定到 DOM 上方便操作
+                const lineDom = document.getElementById(`line-${index}`);
+                if(lineDom) {
+                    lineDom.dataset.start = item.startTime;
+                    lineDom.dataset.end = item.endTime;
+                    lineDom.title = `預計時間: ${item.startTime.toFixed(1)}s - ${item.endTime.toFixed(1)}s`;
+                }
+            });
+
+            isSyncing = true;
+        }
+
+        // --- 4. 渲染字幕 HTML ---
+        function renderSubtitles(data) {
+            subtitlesBox.innerHTML = '';
+            data.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'subtitle-line';
+                div.id = `line-${index}`;
+                div.innerHTML = item.text; // 使用 innerHTML 讓 SBV 多行字幕可以顯示 <br>
+                
+                // 點擊可以跳轉到該時間點 (如果時間軸已經算好)
+                div.onclick = () => {
+                    if (isSyncing) {
+                        audioPlayer.currentTime = item.startTime;
+                        audioPlayer.play();
+                    }
+                };
+                
+                subtitlesBox.appendChild(div);
+            });
+        }
+
+        // --- 5. 播放時同步高亮與捲動 ---
+        let currentActiveIndex = -1;
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!isSyncing || subtitlesData.length === 0) return;
+
+            const currentTime = audioPlayer.currentTime;
+            let foundIndex = -1;
+
+            // 尋找當下時間落在哪個字幕區段
+            for (let i = 0; i < subtitlesData.length; i++) {
+                if (currentTime >= subtitlesData[i].startTime && currentTime <= subtitlesData[i].endTime) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            // 如果剛好在空白停頓期，選擇前一句當作當前的 (為了視覺延續性)
+            if (foundIndex === -1) {
+                for (let i = subtitlesData.length - 1; i >= 0; i--) {
+                    if (currentTime >= subtitlesData[i].endTime) {
+                        foundIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (foundIndex !== currentActiveIndex && foundIndex !== -1) {
+                // 移除舊的高亮
+                if (currentActiveIndex !== -1) {
+                    const oldNode = document.getElementById(`line-${currentActiveIndex}`);
+                    if (oldNode) {
+                        oldNode.classList.remove('active');
+                        oldNode.classList.add('played');
+                    }
+                }
+
+                // 加上新的高亮
+                const newNode = document.getElementById(`line-${foundIndex}`);
+                if (newNode) {
+                    // 把此句之前的全標為 played，之後的移除 played
+                    for(let i=0; i<subtitlesData.length; i++){
+                        const node = document.getElementById(`line-${i}`);
+                        if(i < foundIndex) {
+                            node.classList.remove('active');
+                            node.classList.add('played');
+                        } else if (i > foundIndex) {
+                            node.classList.remove('active');
+                            node.classList.remove('played');
+                        }
+                    }
+
+                    newNode.classList.add('active');
+                    newNode.classList.remove('played');
+                    
+                    // 讓該行置中平滑捲動
+                    newNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                currentActiveIndex = foundIndex;
+            }
+        });
+
+        // 切換全螢幕
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`錯誤，無法切換全螢幕模式: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>
