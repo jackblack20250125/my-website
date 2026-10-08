@@ -822,7 +822,7 @@
         // ★ 部署 GAS 後貼上你的 Web App URL
         const GAS_URL    = 'https://script.google.com/macros/s/AKfycby7TzQUXBFi6FH5gB2XjCYgAEr3ZeE2f8awLjrDb6BzXVPC-2_vmfKM7I8YjCz1vW6d/exec';
 
-        const CACHE_KEY = 'asset_data_v3';
+        const CACHE_KEY = 'asset_data_v4';
         const CACHE_TTL = 3 * 60 * 1000; // 3 分鐘快取
 
         let globalData       = [];
@@ -918,28 +918,44 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const csvText = await response.text();
 
+                // 改用 header: false 避免 Google Sheets 尾端空白欄位引起 PapaParse 引號解析錯亂
                 Papa.parse(csvText, {
-                    header: true,
+                    header: false,
                     skipEmptyLines: true,
                     complete: function(results) {
-                        const rawHeaders = (results.meta && results.meta.fields)
-                            ? results.meta.fields
-                            : Object.keys(results.data[0] || {});
+                        if (!results.data || results.data.length === 0) {
+                            statusMessage.textContent = '試算表中無任何資料';
+                            loader.style.display = 'none';
+                            return;
+                        }
 
-                        // 清洗欄位表頭
-                        const cleanHeaders = rawHeaders
-                            .map(h => h.replace(/^\uFEFF/, '').trim())
-                            .filter(h => h && !h.startsWith('Unnamed') && h !== '第 1 欄');
+                        // 第 1 列為表頭：過濾有效欄位（排除尾端空白欄與「第 1 欄」）
+                        const rawHeaderRow = results.data[0];
+                        const cleanHeaderMap = [];
 
+                        rawHeaderRow.forEach((h, idx) => {
+                            const name = String(h || '').replace(/^\uFEFF/, '').trim();
+                            if (name && name !== '第 1 欄' && !name.startsWith('Unnamed')) {
+                                cleanHeaderMap.push({ name: name, colIdx: idx });
+                            }
+                        });
+
+                        const cleanHeaders = cleanHeaderMap.map(item => item.name);
                         identifySchema(cleanHeaders);
 
-                        globalData = results.data.map(row => {
+                        // 從第 2 列開始解析每筆資料
+                        globalData = [];
+                        for (let i = 1; i < results.data.length; i++) {
+                            const row = results.data[i];
                             const cleaned = {};
-                            cleanHeaders.forEach(k => {
-                                cleaned[k] = (row[k] !== undefined && row[k] !== null) ? String(row[k]).trim() : '';
+                            cleanHeaderMap.forEach(item => {
+                                const val = row[item.colIdx];
+                                cleaned[item.name] = (val !== undefined && val !== null) ? String(val).trim() : '';
                             });
-                            return cleaned;
-                        }).filter(row => Object.values(row).some(v => v !== ''));
+                            if (Object.values(cleaned).some(v => v !== '')) {
+                                globalData.push(cleaned);
+                            }
+                        }
 
                         try {
                             sessionStorage.setItem(CACHE_KEY, JSON.stringify({
