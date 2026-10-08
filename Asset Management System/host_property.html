@@ -296,39 +296,160 @@
             border-radius: 20px;
         }
 
+        /* 欄位色彩區分 (Color-coded Field Themes) */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.2rem;
+            gap: 0.85rem;
         }
 
-        .info-item {
+        .field-box {
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
+            gap: 0.35rem;
+            padding: 0.75rem 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            border: 1px solid transparent;
+            min-height: 62px;
+            justify-content: center;
         }
 
-        .info-item.full-width {
+        .field-box.full-width {
             grid-column: 1 / -1;
         }
 
-        .info-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+        .field-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .field-val {
+            font-size: 0.98rem;
+            font-weight: 500;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
+        /* 1. 現狀/新位置 (綠色系 - 現行狀態) */
+        .field-theme-current {
+            background: rgba(52, 199, 89, 0.08);
+            border-color: rgba(52, 199, 89, 0.22);
+        }
+        .field-theme-current .field-label {
+            color: #1b873f;
+        }
+        .field-theme-current .field-val {
+            color: #0d5c24;
             font-weight: 600;
         }
 
-        .info-label.text-success {
-            color: var(--success);
+        /* 2. 原保管人/原位置 (紫藍系 - 歷史源頭) */
+        .field-theme-origin {
+            background: rgba(88, 86, 214, 0.06);
+            border-color: rgba(88, 86, 214, 0.2);
+        }
+        .field-theme-origin .field-label {
+            color: #5856d6;
+        }
+        .field-theme-origin .field-val {
+            color: #3634a3;
         }
 
-        .info-val {
-            font-size: 1rem;
-            color: var(--text-main);
-            font-weight: 500;
-            word-break: break-all;
+        /* 3. 機型/規格/年分 (天藍系 - 硬體屬性) */
+        .field-theme-spec {
+            background: rgba(0, 113, 227, 0.06);
+            border-color: rgba(0, 113, 227, 0.18);
+        }
+        .field-theme-spec .field-label {
+            color: #0071e3;
+        }
+        .field-theme-spec .field-val {
+            color: #1d1d1f;
+            font-weight: 600;
+        }
+
+        /* 4. 狀況/處理狀況 (狀態膠囊) */
+        .field-theme-status {
+            background: #fbfbfd;
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+        .field-theme-status .field-label {
+            color: #6e6e73;
+        }
+
+        /* 5. 備註/說明 (琥珀橙系 - 備忘訊息) */
+        .field-theme-note {
+            background: rgba(255, 149, 0, 0.08);
+            border: 1px solid rgba(255, 149, 0, 0.25);
+            border-left: 4px solid #ff9500;
+            border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+        }
+        .field-theme-note .field-label {
+            color: #b25000;
+        }
+        .field-theme-note .field-val {
+            color: #5c3000;
+        }
+
+        /* 6. 其他自訂欄位 */
+        .field-theme-default {
+            background: #f8f8fa;
+            border-color: rgba(0, 0, 0, 0.06);
+        }
+        .field-theme-default .field-label {
+            color: #86868b;
+        }
+        .field-theme-default .field-val {
+            color: #1d1d1f;
+        }
+
+        /* 狀態膠囊 Badge */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.22rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            width: fit-content;
+        }
+        .status-pill.status-active {
+            background: rgba(52, 199, 89, 0.15);
+            color: #1b873f;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+        .status-pill.status-scrap {
+            background: rgba(255, 59, 48, 0.12);
+            color: #d70015;
+            border: 1px solid rgba(255, 59, 48, 0.25);
+        }
+        .status-pill.status-spare {
+            background: rgba(255, 149, 0, 0.15);
+            color: #b25000;
+            border: 1px solid rgba(255, 149, 0, 0.3);
+        }
+        .status-pill.status-other {
+            background: rgba(142, 142, 147, 0.15);
+            color: #48484a;
+            border: 1px solid rgba(142, 142, 147, 0.25);
+        }
+
+        /* 卡片標題與編號 Badge */
+        .prop-id-badge {
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--accent-glow);
+            padding: 0.25rem 0.65rem;
+            border-radius: 8px;
+            font-family: 'Orbitron', monospace, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(0, 113, 227, 0.2);
         }
 
         /* Modal Form */
@@ -623,7 +744,7 @@
         <div class="controls-area">
             <div style="flex:1;">
                 <div class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="掃描或輸入財產編號..." autocomplete="off" value="314010103-">
+                    <input type="text" id="searchInput" class="search-input" placeholder="掃描或輸入財產編號..." autocomplete="off" value="314010103-000">
                     <svg class="search-icon" viewBox="0 0 24 24">
                         <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
@@ -678,75 +799,7 @@
             </div>
             <div class="modal-body">
                 <form id="addForm" class="form-grid">
-                    
-                    <div class="form-group">
-                        <label class="form-label">財產編號</label>
-                        <input type="text" class="form-control" id="f_label" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">異動日期或登記追蹤日期</label>
-                        <input type="date" class="form-control" id="f_date" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">電腦年分</label>
-                        <input type="text" list="dl_year" class="form-control" id="f_year">
-                        <datalist id="dl_year"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">狀況</label>
-                        <select class="form-control" id="f_status">
-                            <option value="">-- 請選擇 --</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">型號</label>
-                        <input type="text" list="dl_model" class="form-control" id="f_model">
-                        <datalist id="dl_model"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">其他</label>
-                        <input type="text" list="dl_other" class="form-control" id="f_other">
-                        <datalist id="dl_other"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">新保管人</label>
-                        <input type="text" list="dl_newkeeper" class="form-control" id="f_newkeeper">
-                        <datalist id="dl_newkeeper"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">新位置</label>
-                        <input type="text" list="dl_newloc" class="form-control" id="f_newloc">
-                        <datalist id="dl_newloc"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">原保管人</label>
-                        <input type="text" list="dl_oldkeeper" class="form-control" id="f_oldkeeper">
-                        <datalist id="dl_oldkeeper"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">原使用處室或位置</label>
-                        <input type="text" list="dl_oldloc" class="form-control" id="f_oldloc">
-                        <datalist id="dl_oldloc"></datalist>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="form-label">備註1</label>
-                        <input type="text" class="form-control" id="f_note1">
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="form-label">備註2</label>
-                        <input type="text" class="form-control" id="f_note2">
-                    </div>
+                    <!-- 動態欄位由 JavaScript 依據 Google 試算表實際欄位產生 -->
                 </form>
             </div>
             <div class="modal-footer" style="flex-wrap: wrap; gap: 0.8rem;">
@@ -768,69 +821,91 @@
         const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
         // ★ 部署 GAS 後貼上你的 Web App URL
         const GAS_URL    = 'https://script.google.com/macros/s/AKfycby7TzQUXBFi6FH5gB2XjCYgAEr3ZeE2f8awLjrDb6BzXVPC-2_vmfKM7I8YjCz1vW6d/exec';
-        // token 不放前端，由使用者輸入
 
-        const CACHE_KEY = 'asset_data_v2';
-        const CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+        const CACHE_KEY = 'asset_data_v3';
+        const CACHE_TTL = 3 * 60 * 1000; // 3 分鐘快取
 
-        let globalData = [];
-        let uniqueValues = {};
-        let currentEditMode   = 'add';  // 'add' | 'update'
-        let currentEditLabel  = null;   // 編輯模式時的目標財產編號 
+        let globalData       = [];
+        let currentHeaders   = [];     // 試算表實際存在的欄位清單
+        let labelKey         = '財產編號'; // 財產編號的主鍵欄位名稱
+        let dateKey          = '';     // 異動日期欄位名稱
+        let uniqueValues     = {};     // 各欄位的不重複值（供 datalist 自動補全）
+        let currentEditMode  = 'add';  // 'add' | 'update'
+        let currentEditLabel = null;   // 編輯模式時的原財產編號
+        let currentPrefill   = '314010103-000';
 
-        const searchInput = document.getElementById('searchInput');
-        const loader = document.getElementById('loader');
+        const searchInput      = document.getElementById('searchInput');
+        const loader           = document.getElementById('loader');
         const resultsContainer = document.getElementById('resultsContainer');
-        const statusMessage = document.getElementById('statusMessage');
-        const notFoundArea = document.getElementById('notFoundArea');
+        const statusMessage    = document.getElementById('statusMessage');
+        const notFoundArea     = document.getElementById('notFoundArea');
         
         // Modal elements
-        const addModal = document.getElementById('addModal');
+        const addModal       = document.getElementById('addModal');
+        const addForm        = document.getElementById('addForm');
         const btnOpenAddForm = document.getElementById('btnOpenAddForm');
-        const btnCloseModal = document.getElementById('btnCloseModal');
+        const btnCloseModal  = document.getElementById('btnCloseModal');
         const btnCancelModal = document.getElementById('btnCancelModal');
-        const btnSubmitForm = document.getElementById('btnSubmitForm');
+        const btnSubmitForm  = document.getElementById('btnSubmitForm');
 
-        // Fields mapping
-        const fieldsToExtract = [
-            '電腦年分', '處理狀況', '型號', '其他', 
-            '新保管人', '新位置', '原保管人', '原使用處室或位置'
-        ];
-        
-        const datalistMap = {
-            '電腦年分': 'dl_year',
-            '處理狀況': 'dl_status',
-            '型號': 'dl_model',
-            '其他': 'dl_other',
-            '新保管人': 'dl_newkeeper',
-            '新位置': 'dl_newloc',
-            '原保管人': 'dl_oldkeeper',
-            '原使用處室或位置': 'dl_oldloc'
-        };
+        // ── 工具函式 ──────────────────────────────────────────
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
+        // 去除連字號、空白與特殊符號，轉小寫（正規化比對專用）
+        function normalizeCode(str) {
+            return (str || '').toString().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
+        }
+
+        function sanitizeDomId(str) {
+            return encodeURIComponent(str).replace(/%/g, '_');
+        }
+
+        function _todayStr() {
+            const off = (new Date()).getTimezoneOffset() * 60000;
+            return (new Date(Date.now() - off)).toISOString().slice(0, 10);
+        }
+
+        // ── 自動偵測試算表結構 ────────────────────────────────
+        function identifySchema(headers) {
+            currentHeaders = headers;
+
+            // 尋找財產編號/主鍵欄位
+            labelKey = headers.find(h => /財產.*(編號|標籤)|(主機|設備).*(編號|標籤)|^財產$/.test(h))
+                    || headers.find(h => /財產|編號|標籤/.test(h))
+                    || headers[0] || '財產編號';
+
+            // 尋找日期欄位
+            dateKey = headers.find(h => /異動日期|登記.*日期|追蹤日期|^日期$/.test(h))
+                   || headers.find(h => /日期/.test(h))
+                   || '';
+        }
+
+        // ── 資料初始化 ────────────────────────────────────────
         async function init(forceRefresh = false) {
             loader.style.display = 'block';
             statusMessage.textContent = '讀取 Google 試算表資料中...';
 
-            // ── 速度優化：先嘗試 sessionStorage 快取 ──
             if (!forceRefresh) {
                 try {
                     const cached = sessionStorage.getItem(CACHE_KEY);
                     if (cached) {
-                        const { data, ts } = JSON.parse(cached);
-                        if (Date.now() - ts < CACHE_TTL) {
-                            globalData = data.map(row => {
-                                const cleaned = {};
-                                Object.keys(row).forEach(k => {
-                                    const cleanKey = k.replace(/^\uFEFF/, '').trim();
-                                    cleaned[cleanKey] = row[k];
-                                });
-                                return cleaned;
-                            });
+                        const { data, headers, ts } = JSON.parse(cached);
+                        if (Date.now() - ts < CACHE_TTL && Array.isArray(data) && data.length > 0) {
+                            globalData = data;
+                            identifySchema(headers || Object.keys(data[0]));
                             loader.style.display = 'none';
                             statusMessage.textContent = `已載入資料（共 ${globalData.length} 筆，快取）。輸入財產編號進行查詢。`;
                             extractUniqueValues();
-                            populateDatalists();
+                            setupFilters();
+                            handleSearch();
                             searchInput.focus();
                             return;
                         }
@@ -847,21 +922,38 @@
                     header: true,
                     skipEmptyLines: true,
                     complete: function(results) {
+                        const rawHeaders = (results.meta && results.meta.fields)
+                            ? results.meta.fields
+                            : Object.keys(results.data[0] || {});
+
+                        // 清洗欄位表頭
+                        const cleanHeaders = rawHeaders
+                            .map(h => h.replace(/^\uFEFF/, '').trim())
+                            .filter(h => h && !h.startsWith('Unnamed') && h !== '第 1 欄');
+
+                        identifySchema(cleanHeaders);
+
                         globalData = results.data.map(row => {
                             const cleaned = {};
-                            Object.keys(row).forEach(k => {
-                                const cleanKey = k.replace(/^\uFEFF/, '').trim();
-                                cleaned[cleanKey] = row[k];
+                            cleanHeaders.forEach(k => {
+                                cleaned[k] = (row[k] !== undefined && row[k] !== null) ? String(row[k]).trim() : '';
                             });
                             return cleaned;
-                        });
+                        }).filter(row => Object.values(row).some(v => v !== ''));
+
                         try {
-                            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: globalData, ts: Date.now() }));
+                            sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                                data: globalData,
+                                headers: cleanHeaders,
+                                ts: Date.now()
+                            }));
                         } catch(_) {}
+
                         loader.style.display = 'none';
-                        statusMessage.textContent = `已成功載入資料（共 ${globalData.length} 筆）。輸入上方財產編號進行查詢。`;
+                        statusMessage.textContent = `已成功載入資料（共 ${globalData.length} 筆，${cleanHeaders.length} 個欄位）。輸入財產編號進行查詢。`;
                         extractUniqueValues();
-                        populateDatalists();
+                        setupFilters();
+                        handleSearch();
                         searchInput.focus();
                     },
                     error: function(err) {
@@ -876,144 +968,144 @@
             }
         }
 
+        // 提取所有欄位的不重複值（支援任何新增/修改欄位）
         function extractUniqueValues() {
-            fieldsToExtract.forEach(field => {
+            uniqueValues = {};
+            currentHeaders.forEach(field => {
                 uniqueValues[field] = new Set();
             });
 
             globalData.forEach(row => {
-                fieldsToExtract.forEach(field => {
-                    if (row[field] && row[field].trim() !== '') {
-                        uniqueValues[field].add(row[field].trim());
+                currentHeaders.forEach(field => {
+                    const val = row[field];
+                    if (val && String(val).trim() !== '') {
+                        uniqueValues[field].add(String(val).trim());
                     }
                 });
             });
         }
 
-        function populateDatalists() {
-            fieldsToExtract.forEach(field => {
-                const dl_id = datalistMap[field];
-                const dl = document.getElementById(dl_id);
-                if(dl) {
-                    dl.innerHTML = '';
-                    const sortedVals = Array.from(uniqueValues[field]).sort();
-                    sortedVals.forEach(val => {
+        // 動態綁定頂部快捷篩選器
+        function setupFilters() {
+            const filterMap = [
+                { id: 'filterYear',     dlId: 'flist_year',   regex: /年分|年份/ },
+                { id: 'filterStatus',   dlId: 'flist_status', regex: /狀況|狀態/ },
+                { id: 'filterModel',    dlId: 'flist_model',  regex: /型號|規格/ },
+                { id: 'filterLocation', dlId: 'flist_loc',    regex: /新位置|位置|處室/ }
+            ];
+
+            filterMap.forEach(cfg => {
+                const matchedCol = currentHeaders.find(h => cfg.regex.test(h));
+                const inputEl = document.getElementById(cfg.id);
+                const dlEl = document.getElementById(cfg.dlId);
+
+                if (matchedCol && inputEl && dlEl) {
+                    inputEl.dataset.field = matchedCol;
+                    inputEl.placeholder = `-- ${matchedCol} --`;
+                    dlEl.innerHTML = '';
+                    const vals = Array.from(uniqueValues[matchedCol] || []).sort();
+                    vals.forEach(v => {
                         const opt = document.createElement('option');
-                        opt.value = val;
-                        dl.appendChild(opt);
+                        opt.value = v;
+                        dlEl.appendChild(opt);
                     });
                 }
             });
-
-            // 填入篩選清單選項
-            const filterMap = {
-                '電腦年分': 'flist_year',
-                '處理狀況': 'flist_status',
-                '型號': 'flist_model',
-                '新位置': 'flist_loc'
-            };
-            
-            Object.keys(filterMap).forEach(field => {
-                const listElement = document.getElementById(filterMap[field]);
-                if (listElement) {
-                    listElement.innerHTML = '';
-                    const sortedVals = Array.from(uniqueValues[field]).sort();
-                    sortedVals.forEach(val => {
-                        const opt = document.createElement('option');
-                        opt.value = val;
-                        listElement.appendChild(opt);
-                    });
-                }
-            });
-
-            // 填入狀況 <select> 選項
-            const statusSelect = document.getElementById('f_status');
-            if (statusSelect && uniqueValues['處理狀況']) {
-                const currentVal = statusSelect.value;
-                statusSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
-                Array.from(uniqueValues['處理狀況']).sort().forEach(val => {
-                    const opt = document.createElement('option');
-                    opt.value = val;
-                    opt.textContent = val;
-                    statusSelect.appendChild(opt);
-                });
-                statusSelect.value = currentVal; // 保留已選的值
-            }
         }
 
+        // ── 欄位色彩主題分類與狀態標籤 ───────────────────────
+        function getFieldTheme(fieldName) {
+            if (/新保管人|新位置|現有位置|現保管人|目前保管人|目前位置/.test(fieldName)) {
+                return { themeClass: 'field-theme-current', icon: '📍' };
+            }
+            if (/原保管人|原使用|舊位置|原位置|舊保管人/.test(fieldName)) {
+                return { themeClass: 'field-theme-origin', icon: '📦' };
+            }
+            if (/型號|電腦年分|年份|規格|品牌|CPU|RAM|硬碟|其他/.test(fieldName)) {
+                return { themeClass: 'field-theme-spec', icon: '💻' };
+            }
+            if (/狀況|狀態/.test(fieldName)) {
+                return { themeClass: 'field-theme-status', icon: '⚡' };
+            }
+            if (/備註|說明|原因|附註/.test(fieldName)) {
+                return { themeClass: 'field-theme-note', icon: '📝' };
+            }
+            return { themeClass: 'field-theme-default', icon: '🏷️' };
+        }
+
+        function formatStatusVal(val) {
+            if (!val || val === '-') return '-';
+            let pillClass = 'status-other';
+            let dot = '⚪';
+            if (/使用中|良好|正常/.test(val)) {
+                pillClass = 'status-active';
+                dot = '🟢';
+            } else if (/報廢|壞|損壞|待報廢/.test(val)) {
+                pillClass = 'status-scrap';
+                dot = '🔴';
+            } else if (/備用|存置|待修|借出|閒置/.test(val)) {
+                pillClass = 'status-spare';
+                dot = '🟡';
+            }
+            return `<span class="status-pill ${pillClass}">${dot} ${escapeHtml(val)}</span>`;
+        }
+
+        // ── 卡片渲染（完全動態自適應色彩區分） ────────────────
         function renderCards(records) {
             resultsContainer.innerHTML = '';
+
+            // 排除主標題、日期、時間戳記後的其餘所有欄位
+            const displayHeaders = currentHeaders.filter(h =>
+                h !== labelKey && h !== dateKey && h !== '時間戳記'
+            );
 
             records.forEach((record, index) => {
                 const card = document.createElement('div');
                 card.className = 'data-card';
-                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animationDelay = `${Math.min(index * 0.05, 0.4)}s`;
 
-                const propLabel = record['財產編號'] || '-';
-                const dateVal   = record['異動日期或登記追蹤日期'] || record['異動日期'] || '-';
+                const propLabel = record[labelKey] || '-';
+                const dateVal = dateKey ? (record[dateKey] || '-') : '';
+
+                let gridHtml = '';
+                displayHeaders.forEach(field => {
+                    const rawVal = record[field];
+                    const val = (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== '') ? String(rawVal).trim() : '-';
+                    const theme = getFieldTheme(field);
+                    const isFullWidth = /備註|說明|原因|附註/.test(field) || String(val).length > 28;
+
+                    let renderedVal = escapeHtml(val);
+                    if (/狀況|狀態/.test(field)) {
+                        renderedVal = formatStatusVal(val);
+                    }
+
+                    gridHtml += `
+                        <div class="field-box ${theme.themeClass} ${isFullWidth ? 'full-width' : ''}">
+                            <span class="field-label">${theme.icon} ${escapeHtml(field)}</span>
+                            <span class="field-val">${renderedVal}</span>
+                        </div>
+                    `;
+                });
 
                 card.innerHTML = `
                     <div class="card-header">
                         <div class="card-title" style="display: flex; align-items: center; gap: 0.8rem;">
-                            <input type="checkbox" class="record-checkbox" value="${propLabel}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-glow);">
-                            ${propLabel}
+                            <input type="checkbox" class="record-checkbox" value="${escapeHtml(propLabel)}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-glow);">
+                            <span class="prop-id-badge">${escapeHtml(propLabel)}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:0.8rem;">
-                            <button class="btn edit-card-btn" data-label="${propLabel}"
+                            <button class="btn edit-card-btn" data-label="${escapeHtml(propLabel)}"
                                 style="padding:0.35rem 0.9rem; font-size:0.82rem; border-radius:8px;">
                                 ✏️ 編輯
                             </button>
-                            <div class="card-date">${dateVal}</div>
+                            ${dateVal ? `<div class="card-date">📅 ${escapeHtml(dateVal)}</div>` : ''}
                         </div>
                     </div>
                     <div class="info-grid">
-                        <div class="info-item">
-                            <span class="info-label">狀況</span>
-                            <span class="info-val">${record['處理狀況'] || '-'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">電腦年分</span>
-                            <span class="info-val">${record['電腦年分'] || '-'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">型號</span>
-                            <span class="info-val">${record['型號'] || '-'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">其他</span>
-                            <span class="info-val">${record['其他'] || '-'}</span>
-                        </div>
-
-                        <div class="info-item" style="margin-top:0.8rem;">
-                            <span class="info-label text-success">新保管人</span>
-                            <span class="info-val" style="color:var(--success);">${record['新保管人'] || '-'}</span>
-                        </div>
-                        <div class="info-item" style="margin-top:0.8rem;">
-                            <span class="info-label text-success">新位置</span>
-                            <span class="info-val">${record['新位置'] || '-'}</span>
-                        </div>
-
-                        <div class="info-item">
-                            <span class="info-label">原保管人</span>
-                            <span class="info-val" style="opacity:0.7;">${record['原保管人'] || '-'}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">原使用處室或位置</span>
-                            <span class="info-val" style="opacity:0.7;">${record['原使用處室或位置'] || '-'}</span>
-                        </div>
-
-                        ${record['備註1'] ? `
-                        <div class="info-item full-width" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed var(--border);">
-                            <span class="info-label">備註1</span>
-                            <span class="info-val">${record['備註1']}</span>
-                        </div>` : ''}
-                        ${record['備註2'] ? `
-                        <div class="info-item full-width">
-                            <span class="info-label">備註2</span>
-                            <span class="info-val">${record['備註2']}</span>
-                        </div>` : ''}
+                        ${gridHtml}
                     </div>
                 `;
+
                 resultsContainer.appendChild(card);
 
                 // 勾選變色
@@ -1033,22 +1125,40 @@
                 // 編輯按鈕
                 card.querySelector('.edit-card-btn').addEventListener('click', function() {
                     const lbl = this.dataset.label;
-                    const rec = globalData.find(r => r['財產編號'] === lbl);
+                    const rec = globalData.find(r => r[labelKey] === lbl);
                     if (rec) openModal('update', rec);
                 });
             });
         }
 
+        // ── 智慧正規化搜尋 ───────────────────────────────────
         function handleSearch() {
-            const query = searchInput.value.trim().toLowerCase();
-            const isQueryEmpty = query === '' || query === '314010103-';
-            
-            const filterYearVal = document.getElementById('filterYear').value;
-            const filterStatusVal = document.getElementById('filterStatus').value;
-            const filterModelVal = document.getElementById('filterModel').value;
-            const filterLocationVal = document.getElementById('filterLocation').value;
+            const rawQuery = searchInput.value.trim();
+            const queryLower = rawQuery.toLowerCase();
+            const cleanQuery = normalizeCode(rawQuery);
 
-            if (isQueryEmpty && !filterYearVal && !filterStatusVal && !filterModelVal && !filterLocationVal) {
+            // 預設前綴未打完時視為空查詢
+            const isQueryEmpty = (rawQuery === '' || rawQuery === '314010103-000' || rawQuery === '314010103-');
+
+            // 篩選器值
+            const fYearEl = document.getElementById('filterYear');
+            const fStatusEl = document.getElementById('filterStatus');
+            const fModelEl = document.getElementById('filterModel');
+            const fLocEl = document.getElementById('filterLocation');
+
+            const filterYearVal = fYearEl.value.trim();
+            const filterStatusVal = fStatusEl.value.trim();
+            const filterModelVal = fModelEl.value.trim();
+            const filterLocationVal = fLocEl.value.trim();
+
+            const yearCol = fYearEl.dataset.field;
+            const statusCol = fStatusEl.dataset.field;
+            const modelCol = fModelEl.dataset.field;
+            const locCol = fLocEl.dataset.field;
+
+            const hasFilters = filterYearVal || filterStatusVal || filterModelVal || filterLocationVal;
+
+            if (isQueryEmpty && !hasFilters) {
                 resultsContainer.innerHTML = '';
                 notFoundArea.style.display = 'none';
                 document.getElementById('filterCount').style.display = 'none';
@@ -1056,14 +1166,30 @@
             }
 
             const matches = globalData.filter(row => {
-                const label = (row['財產編號'] || '').trim().toLowerCase();
-                const matchQuery = isQueryEmpty || label.includes(query);
-                const matchYear = !filterYearVal || row['電腦年分'] === filterYearVal;
-                const matchStatus = !filterStatusVal || row['處理狀況'] === filterStatusVal;
-                const matchModel = !filterModelVal || row['型號'] === filterModelVal;
-                const matchLocation = !filterLocationVal || row['新位置'] === filterLocationVal;
-                
-                return matchQuery && matchYear && matchStatus && matchModel && matchLocation;
+                let matchQuery = isQueryEmpty;
+                if (!matchQuery) {
+                    const rawLabel = (row[labelKey] || '').toString();
+                    const labelLower = rawLabel.toLowerCase();
+                    const cleanLabel = normalizeCode(rawLabel);
+
+                    // 1. 原字串包含 或 2. 去除減號/符號後的正規化包含
+                    // （例如 314010103-0001645 自動匹配 3140101-03-0001645，輸入 1645 也直接匹配）
+                    if (labelLower.includes(queryLower) || cleanLabel.includes(cleanQuery)) {
+                        matchQuery = true;
+                    } else {
+                        // 3. 全文各欄位模糊比對（如輸入保管人人名、位置等）
+                        matchQuery = Object.values(row).some(val =>
+                            (val || '').toString().toLowerCase().includes(queryLower)
+                        );
+                    }
+                }
+
+                const matchYear   = !filterYearVal || (yearCol && row[yearCol] === filterYearVal);
+                const matchStatus = !filterStatusVal || (statusCol && row[statusCol] === filterStatusVal);
+                const matchModel  = !filterModelVal || (modelCol && row[modelCol] === filterModelVal);
+                const matchLoc    = !filterLocationVal || (locCol && row[locCol] === filterLocationVal);
+
+                return matchQuery && matchYear && matchStatus && matchModel && matchLoc;
             });
 
             if (matches.length > 0) {
@@ -1075,16 +1201,18 @@
                 resultsContainer.innerHTML = '';
                 notFoundArea.style.display = 'flex';
                 document.getElementById('filterCount').style.display = 'none';
-                
-                // set default labal value on not found
-                const rawVal = searchInput.value.trim();
-                let defLabel = '314010103-';
-                if(rawVal.startsWith('314010103-')) {
-                    defLabel = rawVal;
-                } else if(rawVal.length > 0) {
-                    defLabel = '314010103-' + rawVal;
+
+                // 自動產生建議的財產編號
+                let defLabel = '314010103-000';
+                if (rawQuery.startsWith('314010103-000') || rawQuery.startsWith('3140101-03-') || rawQuery.startsWith('314010103-')) {
+                    defLabel = rawQuery;
+                } else if (/^\d+$/.test(rawQuery)) {
+                    // 若使用者只輸入數字末碼（如 1645），自動補齊成完整號碼
+                    defLabel = '314010103-000' + rawQuery.padStart(4, '0');
+                } else if (rawQuery.length > 0) {
+                    defLabel = '314010103-000' + rawQuery;
                 }
-                document.getElementById('f_label').value = defLabel;
+                currentPrefill = defLabel;
             }
         }
 
@@ -1094,54 +1222,84 @@
         document.getElementById('filterModel').addEventListener('input', handleSearch);
         document.getElementById('filterLocation').addEventListener('input', handleSearch);
 
-        // ── Modal Logic ──────────────────────────────────────────
-        function _todayStr() {
-            const off = (new Date()).getTimezoneOffset() * 60000;
-            return (new Date(Date.now() - off)).toISOString().slice(0, 10);
-        }
-
-        function _setField(id, val) {
-            const el = document.getElementById(id);
-            if (el) el.value = val || '';
-        }
-
+        // ── 動態 Modal 表單 ──────────────────────────────────
         function openModal(mode = 'add', record = null) {
             currentEditMode  = mode;
-            currentEditLabel = record ? record['財產編號'] : null;
+            currentEditLabel = record ? record[labelKey] : null;
 
             document.getElementById('modalTitle').textContent =
                 mode === 'update' ? '編輯主機財產登記' : '新增主機財產登記';
 
-            const fLabel = document.getElementById('f_label');
+            addForm.innerHTML = '';
 
-            if (mode === 'update' && record) {
-                // 預填資料
-                fLabel.value    = record['財產編號'] || '';
-                fLabel.readOnly = true;
-                fLabel.style.opacity = '0.7';
-                _setField('f_date',      record['異動日期或登記追蹤日期'] || record['異動日期'] || _todayStr());
-                _setField('f_year',      record['電腦年分']);
-                _setField('f_status',    record['處理狀況']);
-                _setField('f_model',     record['型號']);
-                _setField('f_other',     record['其他']);
-                _setField('f_newkeeper', record['新保管人']);
-                _setField('f_newloc',    record['新位置']);
-                _setField('f_oldkeeper', record['原保管人']);
-                _setField('f_oldloc',    record['原使用處室或位置']);
-                _setField('f_note1',     record['備註1']);
-                _setField('f_note2',     record['備註2']);
-            } else {
-                // 清空表單
-                fLabel.readOnly = false;
-                fLabel.style.opacity = '1';
-                document.getElementById('addForm').reset();
-                _setField('f_date', _todayStr());
-                const rawVal = searchInput.value.trim();
-                let defLabel = '314010103-';
-                if (rawVal.startsWith('314010103-')) defLabel = rawVal;
-                else if (rawVal.length > 0) defLabel = '314010103-' + rawVal;
-                fLabel.value = defLabel;
-            }
+            // 表單欄位清單（略過時間戳記）
+            const formHeaders = currentHeaders.filter(h => h !== '時間戳記');
+
+            formHeaders.forEach(col => {
+                const formGroup = document.createElement('div');
+                const isFull = /備註|說明|原因|附註/.test(col);
+                formGroup.className = `form-group ${isFull ? 'full' : ''}`;
+
+                const theme = getFieldTheme(col);
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.innerHTML = `${theme.icon} ${escapeHtml(col)}`;
+                formGroup.appendChild(label);
+
+                const inputId = 'field_' + sanitizeDomId(col);
+                const dlId    = 'dl_modal_' + sanitizeDomId(col);
+
+                const isLabelCol = (col === labelKey);
+                const isDateCol  = (col === dateKey || /日期/.test(col));
+
+                if (isDateCol) {
+                    const input = document.createElement('input');
+                    input.type = 'date';
+                    input.className = 'form-control';
+                    input.id = inputId;
+                    input.required = isDateCol;
+                    if (mode === 'update' && record) {
+                        input.value = record[col] || _todayStr();
+                    } else {
+                        input.value = _todayStr();
+                    }
+                    formGroup.appendChild(input);
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-control';
+                    input.id = inputId;
+                    input.setAttribute('list', dlId);
+
+                    if (isLabelCol) {
+                        input.required = true;
+                        if (mode === 'update') {
+                            input.value = record[col] || '';
+                            input.readOnly = true;
+                            input.style.opacity = '0.7';
+                        } else {
+                            input.value = currentPrefill || '314010103-000';
+                        }
+                    } else {
+                        input.value = (mode === 'update' && record) ? (record[col] || '') : '';
+                    }
+
+                    // 綁定動態 datalist
+                    const datalist = document.createElement('datalist');
+                    datalist.id = dlId;
+                    if (uniqueValues[col]) {
+                        Array.from(uniqueValues[col]).sort().forEach(val => {
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            datalist.appendChild(opt);
+                        });
+                    }
+                    formGroup.appendChild(input);
+                    formGroup.appendChild(datalist);
+                }
+
+                addForm.appendChild(formGroup);
+            });
 
             addModal.classList.add('active');
         }
@@ -1155,9 +1313,11 @@
         btnCancelModal.addEventListener('click', closeModal);
         addModal.addEventListener('click', (e) => { if (e.target === addModal) closeModal(); });
 
+        // ── 儲存資料（動態組裝 + 完整錯誤捕捉） ───────────────
         btnSubmitForm.addEventListener('click', async () => {
-            const labelVal = document.getElementById('f_label').value.trim();
-            if (!labelVal) { alert('請輸入財產編號'); return; }
+            const labelInput = document.getElementById('field_' + sanitizeDomId(labelKey));
+            const labelVal = labelInput ? labelInput.value.trim() : '';
+            if (!labelVal) { alert(`請輸入「${labelKey}」`); return; }
 
             if (GAS_URL === 'YOUR_GAS_WEB_APP_URL') {
                 alert('⚠️ 尚未設定 GAS_URL！\n請先部署 Google Apps Script 並貼上 Web App URL。');
@@ -1167,58 +1327,78 @@
             const tokenVal = document.getElementById('f_token').value;
             if (!tokenVal) { alert('請輸入操作密碼'); return; }
 
+            // 動態組裝 payload
             const payload = {
                 action: currentEditMode,
                 _token: tokenVal,
-                '財產編號':            labelVal,
-                '異動日期或登記追蹤日期': document.getElementById('f_date').value,
-                '電腦年分':            document.getElementById('f_year').value,
-                '處理狀況':               document.getElementById('f_status').value,
-                '型號':               document.getElementById('f_model').value,
-                '其他':               document.getElementById('f_other').value,
-                '新保管人':            document.getElementById('f_newkeeper').value,
-                '新位置':             document.getElementById('f_newloc').value,
-                '原保管人':            document.getElementById('f_oldkeeper').value,
-                '原使用處室或位置':      document.getElementById('f_oldloc').value,
-                '備註1':              document.getElementById('f_note1').value,
-                '備註2':              document.getElementById('f_note2').value,
+                targetLabel: currentEditLabel || labelVal // 編輯時定位原始編號
             };
+
+            currentHeaders.forEach(col => {
+                if (col === '時間戳記') return;
+                const el = document.getElementById('field_' + sanitizeDomId(col));
+                if (el) payload[col] = el.value.trim();
+            });
+
+            // 確保主鍵在 payload 內
+            if (!payload[labelKey]) payload[labelKey] = labelVal;
+
+            // 雙向相容：同時提供「備註」與「備註1」以防試算表或 GAS 欄位名稱差異
+            if (payload['備註'] && !payload['備註1']) payload['備註1'] = payload['備註'];
+            if (payload['備註1'] && !payload['備註']) payload['備註'] = payload['備註1'];
 
             btnSubmitForm.disabled    = true;
             btnSubmitForm.textContent = '送出中...';
 
             try {
-                // no-cors：GAS 不回傳 CORS header，但 POST 確實會寫入
-                await fetch(GAS_URL, {
+                // 送出 Simple POST 請求
+                const resp = await fetch(GAS_URL, {
                     method:  'POST',
-                    mode:    'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body:    JSON.stringify(payload)
                 });
 
-                // ── 樂觀更新：直接改記憶體，不重抓整張表（速度優先）──
+                let resData = null;
+                try {
+                    resData = await resp.json();
+                } catch(_) {}
+
+                // 檢查後端錯誤
+                if (resData && resData.result === 'error') {
+                    if (resData.message === 'Unauthorized') {
+                        alert('❌ 操作密碼錯誤！請確認密碼是否與 Google Apps Script 中設定一致。');
+                    } else {
+                        alert('❌ 儲存失敗：' + resData.message);
+                    }
+                    return;
+                }
+
+                // ── 更新本機記憶體 ──
                 if (currentEditMode === 'update') {
-                    const idx = globalData.findIndex(r => r['財產編號'] === labelVal);
+                    const targetToFind = normalizeCode(currentEditLabel || labelVal);
+                    const idx = globalData.findIndex(r => normalizeCode(r[labelKey]) === targetToFind);
                     if (idx !== -1) {
                         Object.assign(globalData[idx], payload);
-                        globalData[idx]['異動日期或登記追蹤日期'] = payload['異動日期或登記追蹤日期'];
                     }
                 } else {
                     const newRec = { ...payload };
-                    newRec['異動日期或登記追蹤日期'] = payload['異動日期或登記追蹤日期'];
-                    globalData.push(newRec);
+                    globalData.unshift(newRec);
                 }
 
                 // 更新快取
                 try {
-                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: globalData, ts: Date.now() }));
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                        data: globalData,
+                        headers: currentHeaders,
+                        ts: Date.now()
+                    }));
                 } catch(_) {}
 
                 extractUniqueValues();
-                populateDatalists();
+                setupFilters();
                 closeModal();
                 handleSearch();
-                showToast(currentEditMode === 'update' ? '✅ 資料已更新！' : '✅ 資料已新增！');
+                showToast(currentEditMode === 'update' ? '✅ 資料已成功更新！' : '✅ 資料已成功新增！');
 
             } catch (err) {
                 alert('❌ 送出失敗：' + err.message);
@@ -1256,18 +1436,16 @@
         }
 
         // Initialize App
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => init(false));
 
         document.getElementById('btnDebug').addEventListener('click', () => {
             if (!globalData.length) { alert('資料尚未載入'); return; }
-            const keys = Object.keys(globalData[0]);
-            const sample = globalData.slice(0, 3).map(r => r['財產編號'] || r[keys[0]]);
-            const hasKey = keys.includes('財產編號');
+            const sample = globalData.slice(0, 3).map(r => r[labelKey]);
             alert(
                 `共 ${globalData.length} 筆資料\n` +
-                `欄位名稱: ${JSON.stringify(keys)}\n\n` +
-                `有「財產編號」欄位: ${hasKey ? '✅ 是' : '❌ 否（欄位名稱不符！）'}\n\n` +
-                `前3筆第一欄: ${JSON.stringify(sample)}`
+                `目前主鍵欄位: 「${labelKey}」\n` +
+                `欄位清單 (${currentHeaders.length}):\n${JSON.stringify(currentHeaders, null, 2)}\n\n` +
+                `前 3 筆資料主鍵: ${JSON.stringify(sample)}`
             );
         });
     </script>
