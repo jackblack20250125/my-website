@@ -414,7 +414,7 @@
         const currentHandler = item.handler || "資訊組";
         const isDefaultHandler = (currentHandler === "資訊組" || currentHandler === "駐點工程師");
         const showOtherInput = !isDefaultHandler && currentHandler !== "";
-        const commonReplies = ["已恢復正常使用", "設備重啟後正常", "加入Radius認證", "重設密碼", "硬體故障報修廠商", "已調整設定參數", "設定IE模式", "設定印表機"];
+        const commonReplies = ["已恢復正常使用", "設備重啟後正常", "安裝wifi模組程式", "重設密碼", "硬體故障報修廠商", "已調整設定參數", "設定IE模式", "設定印表機", "測試正常"];
         let quickReplyHtml = '<div class="quick-reply-container">';
         commonReplies.forEach(text => { quickReplyHtml += `<button type="button" class="btn-quick" onclick="addQuickText('${text}')">${text}</button>`; });
         quickReplyHtml += '</div>';
