@@ -13,20 +13,13 @@ export default function StatsSummary() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSheet = (sheet: string) =>
-      fetch(`${API_URL}?sheet=${sheet}`).then((r) => r.json());
+    const fetchSheet = (sheetName: string) =>
+      fetch(`${API_URL}?sheetName=${encodeURIComponent(sheetName)}`).then((r) => r.json());
     Promise.all([fetchSheet(TABLET_SHEET), fetchSheet(CART_SHEET)])
       .then(([tabletRes, cartRes]) => {
         const process = (json: any, idKey: string, statusKey: string) => {
-          const rows = json.values || [];
-          const header = rows[0] || [];
-          const data = rows.slice(1).map((row: any[]) => {
-            const obj: any = {};
-            header.forEach((col: string, i: number) => {
-              obj[col] = (row[i] ?? "").trim();
-            });
-            return obj;
-          }).filter((r: any) => r[idKey]);
+          const rows: any[] = json.data || [];
+          const data = rows.filter((r: any) => r[idKey]);
           const total = data.length;
           const normal = data.filter((r: any) => r[statusKey] === "正常").length;
           const inUse = data.filter((r: any) => r[statusKey] === "借出").length;

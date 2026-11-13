@@ -5,6 +5,11 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
+  build: {
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.source.html"),
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
