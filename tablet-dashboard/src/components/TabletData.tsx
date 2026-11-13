@@ -9,6 +9,8 @@ const TABLET_SHEET = "平板資料";
 
 const tabletColumns = [
   { key: "設備ID",       label: "設備ID",       defaultVisible: true,  filterable: true  },
+  { key: "型號",         label: "型號",         defaultVisible: true,  filterable: true  },
+  { key: "作業系統",     label: "作業系統",     defaultVisible: true,  filterable: true  },
   { key: "設備序號",     label: "設備序號",     defaultVisible: false, filterable: false },
   { key: "MAC位址",      label: "MAC位址",      defaultVisible: false, filterable: false },
   { key: "平板車ID",     label: "平板車ID",     defaultVisible: true,  filterable: true  },

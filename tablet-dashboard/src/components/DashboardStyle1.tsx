@@ -26,6 +26,7 @@ const tabletColumns = [
   { key: "設備類型",     label: "設備類型",     defaultVisible: false, filterable: true  },
   { key: "品牌",         label: "品牌",         defaultVisible: false, filterable: true  },
   { key: "型號",         label: "型號",         defaultVisible: true,  filterable: true  },
+  { key: "作業系統",     label: "作業系統",     defaultVisible: true,  filterable: true  },
   { key: "配備",         label: "配備",         defaultVisible: false, filterable: true  },
   { key: "財產編號",     label: "財產編號",     defaultVisible: false, filterable: false },
   { key: "設備序號",     label: "設備序號",     defaultVisible: false, filterable: false },
