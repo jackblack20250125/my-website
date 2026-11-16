@@ -13,7 +13,6 @@ import {
   School,
   RefreshCw,
   ChevronRight,
-  User,
   Layers,
   AlertTriangle,
   Radio,
@@ -128,19 +127,26 @@ export default function App() {
         />
       </div>
 
-      {/* 使用者身份資訊卡 */}
-      <div className="px-4 py-3 border-b border-[#383d42] bg-[#282c30] shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-slate-600 border border-slate-500 flex items-center justify-center text-slate-200 shrink-0">
-            <User className="w-5 h-5" />
+      {/* 返回資訊系統首頁 */}
+      <div className="px-3 py-2.5 border-b border-[#383d42] bg-[#282c30] shrink-0">
+        <a
+          href="../"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium text-slate-200 bg-[#34393e] hover:bg-[#3f454b] hover:text-white transition-all shadow-sm border border-slate-600/50 group"
+          title="返回路竹高中資訊整合系統首頁"
+        >
+          <div className="w-7 h-7 rounded-md bg-teal-600/20 border border-teal-500/30 flex items-center justify-center text-teal-400 group-hover:bg-teal-600 group-hover:text-white transition-colors shrink-0">
+            <Home className="w-4 h-4" />
           </div>
-          <div className="overflow-hidden">
-            <div className="font-medium text-xs text-white truncate">
-              Ichs (路竹高中)
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-xs text-white group-hover:text-teal-300 transition-colors">
+              返回資訊系統首頁
             </div>
-            <div className="text-[11px] text-slate-400">資訊組管理員</div>
+            <div className="text-[10px] text-slate-400">
+              LCHS Portal
+            </div>
           </div>
-        </div>
+          <ArrowLeft className="w-3.5 h-3.5 text-teal-400 group-hover:-translate-x-0.5 transition-transform shrink-0" />
+        </a>
       </div>
 
       {/* 導覽選單項目列表 */}
@@ -220,17 +226,8 @@ export default function App() {
         })}
       </nav>
 
-      {/* 側欄底部：返回總入口按鈕 + API 連動資訊 */}
-      <div className="p-3 border-t border-[#383d42] bg-[#222528] space-y-2.5 shrink-0">
-        <a
-          href="../"
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-medium text-slate-200 bg-[#34393e] hover:bg-[#3f454b] hover:text-white transition-all shadow-sm border border-slate-600/50 group"
-          title="返回學校資訊系統入口首頁"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 text-teal-400 group-hover:-translate-x-0.5 transition-transform" />
-          <span>返回資訊系統首頁</span>
-        </a>
-
+      {/* 側欄底部：API 連動資訊 */}
+      <div className="p-3 border-t border-[#383d42] bg-[#222528] shrink-0">
         <div className="text-[11px] text-slate-400 flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5">
             <Radio className="w-3 h-3 text-emerald-400" />
