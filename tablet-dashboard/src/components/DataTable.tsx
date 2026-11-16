@@ -122,11 +122,11 @@ export default function DataTable({
 
   return (
     <Card className="shadow-sm border-slate-200 overflow-hidden flex flex-col flex-1 min-h-0 bg-white">
-      <CardHeader className="pb-3 border-b border-slate-100 shrink-0">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+      <CardHeader className="p-3 sm:pb-3 sm:p-5 border-b border-slate-100 shrink-0">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-2.5 sm:gap-3">
           {/* 左側標題與篩選結果標籤 */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <CardTitle className="text-base font-bold text-slate-800">{title}</CardTitle>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <CardTitle className="text-sm sm:text-base font-bold text-slate-800">{title}</CardTitle>
             <Badge variant="outline" className="text-xs font-normal bg-slate-50 text-slate-700 border-slate-200">
               篩選結果：{filteredStats.total} / {data.length} 筆
             </Badge>
@@ -163,18 +163,18 @@ export default function DataTable({
           </div>
 
           {/* 右側操作：清除按鈕、搜尋、顯示欄位選單 */}
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
             {hasFilter && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8"
+                className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 px-2 sm:px-3"
                 onClick={clearFilters}
               >
                 重設篩選
               </Button>
             )}
-            <div className="relative flex-1 sm:w-60">
+            <div className="relative flex-1 sm:w-56 min-w-[130px]">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
               <Input
                 placeholder="搜尋關鍵字..."
@@ -185,7 +185,7 @@ export default function DataTable({
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1.5 border-slate-200">
+                <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1.5 border-slate-200 px-2 sm:px-3">
                   <LayoutGrid className="w-3.5 h-3.5" /> 欄位設定
                 </Button>
               </DropdownMenuTrigger>
@@ -233,6 +233,11 @@ export default function DataTable({
       </CardHeader>
 
       <CardContent className="p-0 flex-1 min-h-0 relative overflow-auto">
+        {/* 手機/平板滑動提示 */}
+        <div className="lg:hidden px-3 py-1 bg-slate-50 border-b border-slate-200 text-[11px] text-slate-500 flex items-center justify-between shrink-0 select-none">
+          <span>↔ 左右滑動檢視更多欄位</span>
+          <span className="text-slate-400">共 {filteredStats.total} 筆</span>
+        </div>
         <Table className="min-w-max border-collapse">
           <TableHeader className="bg-slate-50 sticky top-0 z-20 shadow-[0_1px_0_0_#e2e8f0]">
             <TableRow className="hover:bg-slate-50 border-b border-slate-200">

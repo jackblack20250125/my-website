@@ -7,13 +7,13 @@ export default function ClassroomView() {
     <div className="space-y-5 pb-6">
       {/* 模組狀態資訊卡 */}
       <Card className="border-slate-200 bg-white shadow-sm">
-        <CardHeader className="py-4 px-5 border-b border-slate-100 flex flex-row items-center justify-between">
+        <CardHeader className="py-3 px-3.5 sm:py-4 sm:px-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold shrink-0">
               <School className="w-4 h-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-800">
+              <CardTitle className="text-sm sm:text-base font-bold text-slate-800">
                 第四格：教室資料管理模組
               </CardTitle>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -21,11 +21,11 @@ export default function ClassroomView() {
               </p>
             </div>
           </div>
-          <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 font-normal text-xs">
+          <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 font-normal text-xs shrink-0">
             <Clock className="w-3 h-3 mr-1" /> 建置規劃中
           </Badge>
         </CardHeader>
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-3.5 sm:p-6 space-y-4 sm:space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/70">
               <div className="font-semibold text-xs text-slate-700 mb-1 flex items-center gap-1.5">
