@@ -13,7 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown, X, ChevronDown } from "lucide-react";
 import type { ColDef } from "@/types";
 
 interface DataTableProps {
@@ -34,7 +36,7 @@ export default function DataTable({
   statusKey,
 }: DataTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() =>
     allColumns.reduce((acc, c) => ({ ...acc, [c.key]: c.defaultVisible }), {})
@@ -57,9 +59,14 @@ export default function DataTable({
         allColumns.some((c) => String(row[c.key] || "").toLowerCase().includes(t))
       );
     }
-    Object.entries(filters).forEach(([k, v]) => {
-      if (v && v !== "ALL") {
-        r = r.filter((row) => String(row[k] || "").trim() === v.trim());
+    // 同欄位多選為 OR，跨欄位為 AND
+    Object.entries(filters).forEach(([k, selectedValues]) => {
+      if (selectedValues && selectedValues.length > 0) {
+        r = r.filter((row) => {
+          const raw = String(row[k] || "").trim();
+          const matchVal = raw === "" ? "(空白 / 未填寫)" : raw;
+          return selectedValues.includes(matchVal);
+        });
       }
     });
     if (sortConfig) {
@@ -81,16 +88,20 @@ export default function DataTable({
     setSortConfig(null);
   };
 
-  const removeSingleFilter = (key: string) => {
+  const removeSingleFilter = (key: string, val?: string) => {
     setFilters((p) => {
-      const next = { ...p };
-      delete next[key];
-      return next;
+      if (!val) {
+        const next = { ...p };
+        delete next[key];
+        return next;
+      }
+      const updated = (p[key] || []).filter((item) => item !== val);
+      return { ...p, [key]: updated };
     });
   };
 
   const hasFilter =
-    Object.keys(filters).some((k) => filters[k] && filters[k] !== "ALL") ||
+    Object.values(filters).some((vals) => vals && vals.length > 0) ||
     searchTerm !== "" ||
     !!sortConfig;
 
@@ -135,20 +146,20 @@ export default function DataTable({
               </Badge>
             )}
             {/* 啟用的欄位篩選 Badge */}
-            {Object.entries(filters)
-              .filter(([, v]) => v && v !== "ALL")
-              .map(([k, v]) => (
+            {Object.entries(filters).flatMap(([k, values]) =>
+              (values || []).map((v) => (
                 <Badge
-                  key={k}
+                  key={`${k}_${v}`}
                   variant="secondary"
                   className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200 font-normal flex items-center gap-1 cursor-pointer hover:bg-indigo-100"
-                  onClick={() => removeSingleFilter(k)}
-                  title="點擊清除此篩選"
+                  onClick={() => removeSingleFilter(k, v)}
+                  title="點擊清除此篩選項目"
                 >
                   {k}: {v}
                   <X className="w-3 h-3 hover:text-indigo-900" />
                 </Badge>
-              ))}
+              ))
+            )}
           </div>
 
           {/* 右側操作：清除按鈕、搜尋、顯示欄位選單 */}
@@ -248,30 +259,112 @@ export default function DataTable({
                             <ArrowUpDown className="w-3 h-3 text-slate-300 opacity-40 group-hover:opacity-100 transition-opacity" />
                           )}
                         </div>
-                        {c.filterable && (
-                          <select
-                            className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white font-normal text-slate-600 w-full hover:border-blue-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-w-[130px]"
-                            value={filters[c.key] || "ALL"}
-                            onChange={(e) =>
-                              setFilters((p) => ({ ...p, [c.key]: e.target.value }))
-                            }
-                          >
-                            <option value="ALL">全部</option>
-                            {Array.from(
-                              new Set(
-                                data
-                                  .map((d) => String(d[c.key] || "").trim())
-                                  .filter(Boolean)
-                              )
+                        {c.filterable && (() => {
+                          const selected = filters[c.key] || [];
+                          const allOptions = Array.from(
+                            new Set(
+                              data
+                                .map((d) => String(d[c.key] || "").trim())
+                                .map((v) => (v === "" ? "(空白 / 未填寫)" : v))
                             )
-                              .sort((a, b) => a.localeCompare(b, "zh-TW", { numeric: true }))
-                              .map((v) => (
-                                <option key={v} value={v}>
-                                  {v}
-                                </option>
-                              ))}
-                          </select>
-                        )}
+                          ).sort((a, b) => {
+                            if (a === "(空白 / 未填寫)") return 1;
+                            if (b === "(空白 / 未填寫)") return -1;
+                            return a.localeCompare(b, "zh-TW", { numeric: true });
+                          });
+
+                          return (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={`h-6 text-[11px] px-2 flex items-center justify-between font-normal w-full max-w-[130px] transition-colors ${
+                                    selected.length > 0
+                                      ? "border-blue-500 text-blue-700 bg-blue-50/50 font-medium"
+                                      : "border-slate-200 text-slate-600 bg-white hover:border-blue-400"
+                                  }`}
+                                >
+                                  <span className="truncate">
+                                    {selected.length === 0
+                                      ? "全部"
+                                      : `已選 ${selected.length} 項`}
+                                  </span>
+                                  <ChevronDown className="w-3 h-3 text-slate-400 shrink-0 ml-1" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                align="start"
+                                className="w-56 p-2 bg-white shadow-lg border border-slate-200 text-xs z-50"
+                              >
+                                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100">
+                                  <span className="font-semibold text-slate-700">
+                                    {c.label} ({selected.length}/{allOptions.length})
+                                  </span>
+                                  <div className="flex items-center gap-2 text-[11px]">
+                                    {selected.length > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setFilters((p) => ({ ...p, [c.key]: [] }))
+                                        }
+                                        className="text-rose-600 hover:underline"
+                                      >
+                                        清除
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setFilters((p) => ({
+                                          ...p,
+                                          [c.key]:
+                                            selected.length === allOptions.length
+                                              ? []
+                                              : [...allOptions],
+                                        }))
+                                      }
+                                      className="text-blue-600 hover:underline"
+                                    >
+                                      {selected.length === allOptions.length
+                                        ? "重設"
+                                        : "全選"}
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="max-h-52 overflow-y-auto space-y-0.5 pr-1">
+                                  {allOptions.map((opt) => {
+                                    const checked = selected.includes(opt);
+                                    return (
+                                      <label
+                                        key={opt}
+                                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer select-none transition-colors ${
+                                          checked
+                                            ? "bg-blue-50 text-blue-900 font-medium"
+                                            : "hover:bg-slate-50 text-slate-700"
+                                        }`}
+                                      >
+                                        <Checkbox
+                                          checked={checked}
+                                          onCheckedChange={(val) => {
+                                            setFilters((prev) => {
+                                              const cur = prev[c.key] || [];
+                                              const next = val
+                                                ? [...cur, opt]
+                                                : cur.filter((x) => x !== opt);
+                                              return { ...prev, [c.key]: next };
+                                            });
+                                          }}
+                                        />
+                                        <span className="truncate">{opt}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })()}
                       </div>
                     </TableHead>
                   )
