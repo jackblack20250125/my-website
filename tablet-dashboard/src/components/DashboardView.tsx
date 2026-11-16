@@ -290,7 +290,7 @@ export default function DashboardView({
                         {cart["平板車ID編號"] || `車輛 #${idx + 1}`}
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
-                        {cart["所在班級"] || cart["放置位置"] || "未指定位置"}
+                        {cart["所在位置"] ? `${cart["所在位置"]}${cart["位置編號"] ? ` (${cart["位置編號"]})` : ""}` : "未指定位置"}
                       </div>
                     </div>
                     <div className="text-right">
