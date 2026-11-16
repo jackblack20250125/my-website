@@ -279,11 +279,42 @@
     /* Grid for Forms */
     .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .grid-full { grid-column: span 2; }
+
+    /* Top Navigation */
+    .top-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 14px;
+    }
+    .btn-back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--color-text-main);
+      text-decoration: none;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      transition: all 0.2s ease;
+    }
+    .btn-back-home:hover {
+      background: rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
 
 <div class="container" id="mainContainer">
+  <div class="top-nav-bar">
+    <a href="index.html" class="btn-back-home" title="返回資訊整合系統首頁">
+      <span>🏠</span> 回總首頁
+    </a>
+  </div>
   <h1>資訊物品管理系統</h1>
   <div class="mode-info">目前作業模式：<span id="modeDisplay">借用設備</span></div>
 

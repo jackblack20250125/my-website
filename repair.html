@@ -103,10 +103,18 @@
       .quick-reply-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
       .btn-quick { font-size: 0.8rem; padding: 4px 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.2s; }
       .btn-quick:hover { background: #e5e7eb; border-color: #9ca3af; color: #111827; }
+      .top-nav-bar { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 12px; }
+      .btn-back-home { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #e2e8f0; transition: all 0.2s ease; }
+      .btn-back-home:hover { background: #e2e8f0; color: #1e293b; transform: translateY(-1px); }
     </style>
   </head>
   <body>
     <div class="container">
+      <div class="top-nav-bar">
+        <a href="index.html" class="btn-back-home" title="返回資訊整合系統首頁">
+          <i class="bi bi-house-door-fill"></i> 回總首頁
+        </a>
+      </div>
       <div class="header">
         <h2>高雄市立路竹高中資訊報修系統V2.1</h2>
         <div style="color:#6b7280; font-size:0.9rem; margin-top:5px;">LCHS IT Services</div>
