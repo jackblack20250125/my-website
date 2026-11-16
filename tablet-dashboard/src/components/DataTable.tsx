@@ -304,7 +304,7 @@ export default function DataTable({
             ) : (
               processed.map((row, i) => (
                 <TableRow
-                  key={row["設備ID"] || row["平板車ID編號"] || i}
+                  key={row._rowId || `${row["設備ID"] || row["平板車ID編號"] || "row"}_${row["平板車ID"] || ""}_${i}`}
                   className="hover:bg-blue-50/40 transition-colors border-b border-slate-100 text-xs text-slate-700"
                 >
                   {allColumns.map((c) => {

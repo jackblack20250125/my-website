@@ -47,13 +47,19 @@ export default function App() {
         fetchSheet(CART_SHEET),
       ]);
 
-      // 排除無設備ID或空白的列
-      const cleanTablets = tablets.filter(
-        (r: any) => String(r["設備ID"] || "").trim() !== ""
-      );
-      const cleanCarts = carts.filter(
-        (r: any) => String(r["平板車ID編號"] || "").trim() !== ""
-      );
+      // 排除無設備ID或空白的列，並賦予唯一識別碼避免 React Key 碰撞
+      const cleanTablets = tablets
+        .filter((r: any) => String(r["設備ID"] || "").trim() !== "")
+        .map((r: any, idx: number) => ({
+          ...r,
+          _rowId: `tablet_${r["設備ID"]}_${r["平板車ID"] || "none"}_${idx}`,
+        }));
+      const cleanCarts = carts
+        .filter((r: any) => String(r["平板車ID編號"] || "").trim() !== "")
+        .map((r: any, idx: number) => ({
+          ...r,
+          _rowId: `cart_${r["平板車ID編號"]}_${idx}`,
+        }));
 
       setTabletData(cleanTablets);
       setCartData(cleanCarts);
